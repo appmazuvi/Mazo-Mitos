@@ -56,6 +56,15 @@ export function Layout() {
               )}
             </NavLink>
           ))}
+          <a
+            href="/manual.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="nav-pill flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-white/70"
+          >
+            <Icon name="shield" size={18} />
+            Manual
+          </a>
           {user?.role === "ADMIN" && (
             <NavLink
               to="/admin"

@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Manual de CartaVerso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cinzel:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0a0d;
+    --bg-elevated: #101015;
+    --bg-card: #151519;
+    --border: rgba(255,255,255,0.08);
+    --text: #f2f2f4;
+    --text-muted: #9a9aa4;
+    --accent: #6a5cff;
+    --accent-soft: #8f84ff;
+    --gold: #f0b93d;
+    --gold-soft: #ffe08a;
+    --gold-deep: #a86a1c;
+    --wood-dark: #2b1608;
+    --rarity-comun: #b7c2cf;
+    --rarity-rara: #45b8ff;
+    --rarity-epica: #c463ff;
+    --rarity-legendaria: #ffb43d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 560px at 50% -14%, rgba(106,92,255,0.10), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 48px 24px 100px; }
+  h1, h2, h3, .font-display { font-family: "Cinzel", "Inter", serif; letter-spacing: 0.01em; }
+
+  header.hero {
+    text-align: center;
+    padding: 40px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+  }
+  .badge-logo {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: linear-gradient(160deg, var(--accent-soft), var(--accent) 60%, #4c3fd6);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px; font-size: 26px;
+    box-shadow: 0 10px 24px rgba(106,92,255,0.35);
+  }
+  header.hero h1 { font-size: 34px; margin: 0 0 6px; }
+  header.hero p { color: var(--text-muted); font-size: 15px; margin: 0; }
+
+  .toolbar {
+    display: flex; justify-content: center; gap: 10px; margin-top: 22px;
+  }
+  .btn {
+    font-family: "Inter", sans-serif;
+    background: var(--accent); color: #fff; border: none;
+    padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 14px;
+    cursor: pointer;
+  }
+  .btn:hover { background: var(--accent-soft); }
+
+  nav.toc {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px 24px; margin-bottom: 40px;
+  }
+  nav.toc h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin: 0 0 12px; }
+  nav.toc ol { columns: 2; margin: 0; padding-left: 20px; font-size: 14px; }
+  nav.toc li { margin-bottom: 6px; }
+  nav.toc a { color: var(--text); text-decoration: none; }
+  nav.toc a:hover { color: var(--accent-soft); }
+
+  section { margin-bottom: 46px; page-break-inside: avoid; }
+  section h2 {
+    font-size: 22px; margin: 0 0 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  section h2 .num {
+    width: 30px; height: 30px; border-radius: 8px; background: rgba(106,92,255,0.16);
+    color: var(--accent-soft); display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-family: "Inter", sans-serif; font-weight: 700;
+  }
+  section > p.lead { color: var(--text-muted); margin: 0 0 18px; font-size: 15px; }
+  section h3 { font-size: 16px; margin: 22px 0 8px; }
+  p { margin: 0 0 12px; font-size: 14.5px; }
+
+  .card-box {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px; margin: 14px 0;
+  }
+
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; }
+
+  .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 999px;
+    border: 1px solid var(--border); background: rgba(255,255,255,0.03);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 999px; display: inline-block; }
+
+  /* ---- Diagrama de anatomía de carta ---- */
+  .anatomy { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+  .sample-card {
+    position: relative;
+    width: 200px; flex-shrink: 0;
+    border-radius: 12px;
+    background: linear-gradient(160deg, #46301a 0%, #2c1a0c 45%, #170c04 100%);
+    border: 3px solid var(--wood-dark);
+    outline: 2px solid var(--rarity-legendaria);
+    outline-offset: -5px;
+    box-shadow: 0 14px 30px rgba(0,0,0,0.5), 0 0 24px -4px rgba(255,180,61,0.55);
+    overflow: hidden;
+  }
+  .sample-card .art {
+    height: 96px;
+    background: linear-gradient(135deg, #3a2a55, #7c3a8f 45%, #d97a3d);
+  }
+  .sample-card .body { padding: 12px; position: relative; }
+  .sample-cost {
+    position: absolute; top: -22px; right: 10px; width: 28px; height: 28px; border-radius: 999px;
+    background: radial-gradient(circle at 30% 22%, #a8ecff, #3fa8e0 45%, #0d5f96 85%);
+    box-shadow: 0 0 0 2px #04263d, 0 0 0 3px rgba(255,255,255,0.3);
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; color: #fff;
+    font-family: "Cinzel", serif;
+  }
+  .sample-name { font-family: "Cinzel", serif; font-weight: 700; font-size: 14px; margin-bottom: 3px; }
+  .sample-type { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--rarity-legendaria); margin-bottom: 8px; }
+  .sample-kw {
+    display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border); background: rgba(255,255,255,0.06);
+    margin-bottom: 8px;
+  }
+  .sample-desc { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4; }
+  .sample-stats { display: flex; justify-content: space-between; }
+  .sample-stat {
+    display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 800; color: #fff;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.5);
+  }
+  .sample-stat.atk { background: radial-gradient(circle at 30% 22%, #fdba74, #f97316 55%, #9a3412); }
+  .sample-stat.hp { background: radial-gradient(circle at 30% 22%, #6ee7b7, #10b981 55%, #065f46); }
+
+  .callouts { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
+  .callout { display: flex; gap: 10px; }
+  .callout .n {
+    width: 20px; height: 20px; border-radius: 999px; background: var(--accent);
+    color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+  }
+
+  .faction-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 14px 0; }
+  .faction-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .faction-card h4 { margin: 0 0 4px; font-size: 14px; font-family: "Cinzel", serif; }
+  .faction-card p { margin: 0; font-size: 12.5px; color: var(--text-muted); }
+
+  footer { text-align: center; color: var(--text-muted); font-size: 12.5px; margin-top: 60px; border-top: 1px solid var(--border); padding-top: 20px; }
+
+  @media print {
+    body { background: var(--bg); }
+    .toolbar { display: none; }
+    a[href]::after { content: none; }
+    section { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="badge-logo">🎴</div>
+    <h1>Manual de CartaVerso</h1>
+    <p>Guía completa del multiverso de Aralon — cartas, batalla y comunidad</p>
+    <div class="toolbar">
+      <button class="btn" onclick="window.print()">Descargar / Imprimir PDF</button>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <h2>Contenido</h2>
+    <ol>
+      <li><a href="#intro">¿Qué es CartaVerso?</a></li>
+      <li><a href="#empezar">Primeros pasos</a></li>
+      <li><a href="#anatomia">Anatomía de una carta</a></li>
+      <li><a href="#facciones">Las 5 facciones elementales</a></li>
+      <li><a href="#rarezas">Rarezas</a></li>
+      <li><a href="#mazos">Cómo armar un mazo</a></li>
+      <li><a href="#reglas">Reglas de batalla</a></li>
+      <li><a href="#palabras">Palabras clave y efectos</a></li>
+      <li><a href="#turno">Estructura de un turno</a></li>
+      <li><a href="#victoria">Condición de victoria</a></li>
+      <li><a href="#social">La comunidad</a></li>
+      <li><a href="#logros">Logros</a></li>
+      <li><a href="#consejos">Consejos para empezar</a></li>
+    </ol>
+  </nav>
+
+  <section id="intro">
+    <h2><span class="num">1</span>¿Qué es CartaVerso?</h2>
+    <p class="lead">Una red social pensada para jugadores de cartas coleccionables.</p>
+    <p>CartaVerso combina un juego de cartas de combate por turnos —estilo Magic o Hearthstone— con una red social completa: perfil competitivo, feed de publicaciones, historias, grupos, mensajes directos y un sistema de logros. Armás mazos con las 65 cartas del multiverso de Aralon, los publicás para que otros jugadores los prueben, y batallás en tiempo real contra rivales de todo el mundo.</p>
+  </section>
+
+  <section id="empezar">
+    <h2><span class="num">2</span>Primeros pasos</h2>
+    <ol style="padding-left: 20px; font-size: 14.5px;">
+      <li>Creá tu cuenta y completá tu perfil.</li>
+      <li>Explorá la colección completa en <strong>Cartas</strong> para conocer el pool de 65 cartas.</li>
+      <li>Armá tu primer mazo en <strong>Mazos → Crear mazo</strong>, o usá el generador automático para tener uno listo en segundos.</li>
+      <li>Publicalo si querés compartirlo con la comunidad.</li>
+      <li>Entrá a <strong>Batalla</strong> para jugar tu primera partida.</li>
+    </ol>
+  </section>
+
+  <section id="anatomia">
+    <h2><span class="num">3</span>Anatomía de una carta</h2>
+    <p class="lead">Toda la información que necesitás está en la propia carta.</p>
+    <div class="anatomy">
+      <div class="sample-card">
+        <div class="art"></div>
+        <div class="body">
+          <div class="sample-cost">4</div>
+          <div class="sample-name">Yggros, el Inquebrantable</div>
+          <div class="sample-type">● Legendaria · Criatura</div>
+          <div class="sample-kw">🛡 Provocar</div>
+          <div class="sample-desc">Un ancestro de raíz y piedra que protege el corazón del bosque.</div>
+          <div class="sample-stats">
+            <span class="sample-stat atk">⚔ 4</span>
+            <span class="sample-stat hp">❤ 7</span>
+          </div>
+        </div>
+      </div>
+      <div class="callouts">
+        <div class="callout"><span class="n">1</span><span><strong>Gema de coste</strong> (arriba a la derecha): la energía que necesitás para jugarla.</span></div>
+        <div class="callout"><span class="n">2</span><span><strong>Nombre</strong> y, debajo, <strong>rareza + tipo</strong> (Criatura o Hechizo).</span></div>
+        <div class="callout"><span class="n">3</span><span><strong>Insignia de palabra clave</strong>, si la carta tiene una habilidad especial (Provocar, Carga, Vida robada, o la categoría del efecto si es un hechizo).</span></div>
+        <div class="callout"><span class="n">4</span><span><strong>Texto de reglas</strong>: qué hace la carta exactamente.</span></div>
+        <div class="callout"><span class="n">5</span><span><strong>Ataque</strong> (ícono de espadas, naranja) y <strong>vida</strong> (ícono de corazón, verde) — solo en criaturas.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="facciones">
+    <h2><span class="num">4</span>Las 5 facciones elementales</h2>
+    <p class="lead">Cada carta pertenece a una identidad elemental que define su estilo visual y su forma de jugar.</p>
+    <div class="faction-grid">
+      <div class="faction-card"><h4>🔥 Ignis</h4><p>Fuego y lava. Criaturas agresivas y hechizos de daño directo.</p></div>
+      <div class="faction-card"><h4>🌊 Abisal</h4><p>Corrientes oceánicas. Control, curación y ventaja de cartas.</p></div>
+      <div class="faction-card"><h4>🌿 Terra</h4><p>Raíz y piedra. Criaturas resistentes y Provocar.</p></div>
+      <div class="faction-card"><h4>🌪️ Céfiro</h4><p>Viento y tormenta. Velocidad, Carga y ataques directos.</p></div>
+      <div class="faction-card"><h4>🌑 Vacío</h4><p>Magia arcana y oscura. Efectos disruptivos y destrucción.</p></div>
+    </div>
+  </section>
+
+  <section id="rarezas">
+    <h2><span class="num">5</span>Rarezas</h2>
+    <table>
+      <tr><th>Rareza</th><th>Color</th><th>Copias máximas por mazo</th></tr>
+      <tr><td>Común</td><td><span class="dot" style="background:var(--rarity-comun)"></span> Gris</td><td>3</td></tr>
+      <tr><td>Rara</td><td><span class="dot" style="background:var(--rarity-rara)"></span> Celeste</td><td>3</td></tr>
+      <tr><td>Épica</td><td><span class="dot" style="background:var(--rarity-epica)"></span> Violeta</td><td>2</td></tr>
+      <tr><td>Legendaria</td><td><span class="dot" style="background:var(--rarity-legendaria)"></span> Dorado</td><td>1 (única)</td></tr>
+    </table>
+  </section>
+
+  <section id="mazos">
+    <h2><span class="num">6</span>Cómo armar un mazo</h2>
+    <p>Un mazo debe tener <strong>exactamente 30 cartas</strong>, respetando el límite de copias de la tabla anterior. Podés armarlo carta por carta desde el editor, o tocar <strong>Generar automáticamente</strong> para que el sistema arme uno equilibrado al instante. Una vez conforme, guardalo y, si querés, marcalo como público para que aparezca en las búsquedas y en el perfil de otros jugadores como mazo destacado.</p>
+  </section>
+
+  <section id="reglas">
+    <h2><span class="num">7</span>Reglas de batalla</h2>
+    <div class="pill-row">
+      <span class="pill">❤ 20 de vida inicial (máx. 30 con curación)</span>
+      <span class="pill">⚡ Energía: empieza en 0, +1 por turno hasta 10</span>
+      <span class="pill">🃏 Mano máxima: 10 cartas</span>
+      <span class="pill">🛡️ Tablero máximo: 7 criaturas</span>
+    </div>
+    <p>Quien juega primero comienza con <strong>3 cartas</strong> en la mano; quien juega segundo empieza con <strong>4</strong>, para compensar la desventaja de no mover primero. Si tu mazo se queda sin cartas, cada intento de robar te inflige daño por fatiga, que aumenta en 1 cada vez que vuelve a pasar.</p>
+  </section>
+
+  <section id="palabras">
+    <h2><span class="num">8</span>Palabras clave y efectos</h2>
+    <h3>Palabras clave de criaturas</h3>
+    <table>
+      <tr><th>Palabra</th><th>Efecto</th></tr>
+      <tr><td>🛡 Provocar</td><td>El rival debe atacar a esta criatura antes que a cualquier otro objetivo.</td></tr>
+      <tr><td>⚡ Carga</td><td>Puede atacar el mismo turno en que se juega (normalmente hay que esperar un turno).</td></tr>
+      <tr><td>❤ Vida robada</td><td>Cura a tu héroe una cantidad igual al daño que esta criatura inflige en combate.</td></tr>
+    </table>
+    <h3>Categorías de efectos de hechizo</h3>
+    <table>
+      <tr><th>Categoría</th><th>Qué hace</th></tr>
+      <tr><td>🔥 Daño</td><td>Inflige daño directo a un objetivo o al héroe rival.</td></tr>
+      <tr><td>❤ Curación</td><td>Restaura vida a tu héroe.</td></tr>
+      <tr><td>📚 Roba cartas</td><td>Robás cartas extra de tu mazo.</td></tr>
+      <tr><td>⚔ Potencia</td><td>Aumenta el ataque de una criatura propia.</td></tr>
+      <tr><td>💀 Destruye</td><td>Elimina instantáneamente a la criatura objetivo.</td></tr>
+    </table>
+  </section>
+
+  <section id="turno">
+    <h2><span class="num">9</span>Estructura de un turno</h2>
+    <ol style="padding-left: 20px; font-size: 14.5px;">
+      <li><strong>Robo automático:</strong> al empezar tu turno, ganás 1 de energía máxima (hasta 10) y robás una carta.</li>
+      <li><strong>Fase principal:</strong> jugá criaturas y hechizos pagando su coste en energía, y atacá con las criaturas que puedan hacerlo (las recién invocadas tienen "resaca de invocación" salvo que tengan Carga).</li>
+      <li><strong>Reglas de ataque:</strong> si el rival tiene una criatura con Provocar en el tablero, tenés que atacarla antes de poder atacar a otro objetivo o directo a su vida.</li>
+      <li><strong>Fin de turno:</strong> le pasás el turno al rival.</li>
+    </ol>
+  </section>
+
+  <section id="victoria">
+    <h2><span class="num">10</span>Condición de victoria</h2>
+    <p>Ganás la partida cuando la vida de tu rival llega a 0, ya sea por ataques de tus criaturas, hechizos de daño, o daño por fatiga.</p>
+  </section>
+
+  <section id="social">
+    <h2><span class="num">11</span>La comunidad</h2>
+    <p>CartaVerso es también una red social pensada para jugadores:</p>
+    <div class="pill-row">
+      <span class="pill">📈 Perfil competitivo con rating tipo Elo y ranking</span>
+      <span class="pill">📰 Feed y publicaciones con imágenes</span>
+      <span class="pill">❤️ 5 tipos de reacciones</span>
+      <span class="pill">⏳ Historias de 24 horas</span>
+      <span class="pill">👥 Grupos y clanes</span>
+      <span class="pill">✉️ Mensajes directos en vivo</span>
+      <span class="pill">🔔 Notificaciones en tiempo real</span>
+      <span class="pill">🔍 Exploración algorítmica</span>
+    </div>
+  </section>
+
+  <section id="logros">
+    <h2><span class="num">12</span>Logros</h2>
+    <table>
+      <tr><th>Logro</th><th>Cómo desbloquearlo</th></tr>
+      <tr><td>Primera Victoria</td><td>Ganá tu primera partida.</td></tr>
+      <tr><td>Veterano</td><td>Ganá 10 partidas.</td></tr>
+      <tr><td>Leyenda del Multiverso</td><td>Ganá 50 partidas.</td></tr>
+      <tr><td>Voz del Multiverso</td><td>Publicá tu primer post.</td></tr>
+      <tr><td>Con Seguidores</td><td>Conseguí tu primer seguidor.</td></tr>
+      <tr><td>Influencer Arcano</td><td>Alcanzá 25 seguidores.</td></tr>
+      <tr><td>Mariposa Social</td><td>Seguí a 10 jugadores.</td></tr>
+      <tr><td>Constructor</td><td>Creá tu primer mazo.</td></tr>
+      <tr><td>Maestro de Mazos</td><td>Creá 5 mazos.</td></tr>
+      <tr><td>En Ascenso</td><td>Alcanzá 1200 de rating.</td></tr>
+      <tr><td>Elite</td><td>Alcanzá 1500 de rating.</td></tr>
+      <tr><td>Fundador</td><td>Creá un grupo.</td></tr>
+    </table>
+  </section>
+
+  <section id="consejos">
+    <h2><span class="num">13</span>Consejos para empezar</h2>
+    <div class="card-box">
+      <p>• Un mazo balanceado suele tener cartas de costo bajo (1-3) para los primeros turnos y algunas de alto impacto para el final de la partida.</p>
+      <p>• Las criaturas con Provocar son excelentes para frenar mazos agresivos: úsalas para proteger tu vida.</p>
+      <p>• Guardá tus hechizos de Destruye para las amenazas más grandes del rival.</p>
+      <p>• Publicá tus mazos: recibir reacciones y comentarios te ayuda a mejorarlos.</p>
+    </div>
+  </section>
+
+  <footer>
+    CartaVerso · El multiverso de cartas de Aralon
+  </footer>
+
+</div>
+</body>
+</html>
