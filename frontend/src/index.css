@@ -7,15 +7,26 @@
   --r: 14px;
   --r-lg: 20px;
   --r-xl: 24px;
-  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.24);
-  --shadow-sm: 0 2px 6px rgba(16, 24, 40, 0.28);
-  --shadow-md: 0 8px 24px rgba(16, 24, 40, 0.36);
-  --bg: #0b0c14;
-  --bg-elevated: #12131e;
-  --bg-card: #161826;
-  --border: rgba(255, 255, 255, 0.08);
-  --text: #f4f4f8;
-  --text-muted: #9a9ab0;
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.5);
+
+  --bg: #0a0710;
+  --bg-elevated: #130f1f;
+  --bg-card: #171225;
+  --border: rgba(199, 168, 255, 0.14);
+  --text: #f4f0ff;
+  --text-muted: #a99cc4;
+
+  --gold: #e8b64c;
+  --gold-soft: #f4d78a;
+
+  --rarity-comun: #9aa0b4;
+  --rarity-rara: #4fa3ff;
+  --rarity-epica: #b06bff;
+  --rarity-legendaria: #e8b64c;
+
+  --font-display: "Cinzel", "Inter", serif;
 }
 
 * {
@@ -29,10 +40,20 @@ body,
 }
 
 body {
-  background: var(--bg);
+  background:
+    radial-gradient(1200px 700px at 15% -10%, rgba(124, 92, 255, 0.16), transparent 60%),
+    radial-gradient(900px 600px at 100% 0%, rgba(232, 182, 76, 0.08), transparent 55%),
+    radial-gradient(1000px 800px at 50% 120%, rgba(80, 40, 140, 0.18), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
   color: var(--text);
   font-family: "Inter", system-ui, sans-serif;
   letter-spacing: -0.011em;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
 }
 
 ::-webkit-scrollbar {
@@ -40,7 +61,7 @@ body {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(199, 168, 255, 0.18);
   border-radius: 999px;
 }
 ::-webkit-scrollbar-track {
@@ -48,22 +69,23 @@ body {
 }
 
 .card-surface {
-  background: var(--bg-card);
+  background: linear-gradient(180deg, var(--bg-card), var(--bg-elevated));
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-sm);
 }
 
 .btn-primary {
-  background: #7c5cff;
+  background: linear-gradient(180deg, #8f6bff, #6a45ec);
   color: white;
   border-radius: var(--r);
   font-weight: 600;
-  box-shadow: 0 4px 14px rgba(124, 92, 255, 0.35);
+  box-shadow: 0 4px 16px rgba(124, 92, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(199, 168, 255, 0.35);
   transition: filter 0.15s ease, transform 0.1s ease;
 }
 .btn-primary:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.1);
 }
 .btn-primary:active {
   transform: translateY(1px);
@@ -73,19 +95,36 @@ body {
   cursor: not-allowed;
 }
 
+.btn-gold {
+  background: linear-gradient(180deg, var(--gold-soft), var(--gold));
+  color: #2a1a05;
+  border-radius: var(--r);
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(232, 182, 76, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 224, 150, 0.6);
+  transition: filter 0.15s ease, transform 0.1s ease;
+}
+.btn-gold:hover {
+  filter: brightness(1.06);
+}
+.btn-gold:active {
+  transform: translateY(1px);
+}
+
 .btn-ghost {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.02);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: var(--r);
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(199, 168, 255, 0.08);
+  border-color: rgba(199, 168, 255, 0.3);
 }
 
 .input-field {
-  background: var(--bg-elevated);
+  background: rgba(0, 0, 0, 0.25);
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
   color: var(--text);
@@ -94,7 +133,7 @@ body {
 }
 .input-field:focus {
   outline: none;
-  border-color: #7c5cff;
+  border-color: #a58bff;
   box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.25);
 }
 
@@ -103,9 +142,60 @@ body {
   transition: background 0.15s ease, color 0.15s ease;
 }
 .nav-pill.active {
-  background: #7c5cff;
+  background: linear-gradient(180deg, #8f6bff, #6a45ec);
   color: white;
+  box-shadow: 0 2px 10px rgba(124, 92, 255, 0.35);
 }
 .nav-pill:not(.active):hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(199, 168, 255, 0.08);
+}
+
+/* ---- Marcos de carta tipo TCG ---- */
+.card-frame {
+  position: relative;
+  border-radius: var(--r);
+  background: linear-gradient(160deg, #201a30 0%, #140f22 55%, #0e0a18 100%);
+  box-shadow: var(--shadow-sm), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+.card-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  border-radius: inherit;
+  background: linear-gradient(155deg, var(--frame-color, #6a5a8a), transparent 40%, transparent 60%, var(--frame-color, #6a5a8a));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.9;
+}
+.card-frame.rarity-COMUN { --frame-color: var(--rarity-comun); }
+.card-frame.rarity-RARA { --frame-color: var(--rarity-rara); box-shadow: var(--shadow-sm), 0 0 14px -4px rgba(79, 163, 255, 0.5); }
+.card-frame.rarity-EPICA { --frame-color: var(--rarity-epica); box-shadow: var(--shadow-sm), 0 0 16px -3px rgba(176, 107, 255, 0.55); }
+.card-frame.rarity-LEGENDARIA { --frame-color: var(--rarity-legendaria); box-shadow: var(--shadow-sm), 0 0 20px -2px rgba(232, 182, 76, 0.6); }
+
+.cost-gem {
+  background: radial-gradient(circle at 30% 25%, #a58bff, #6a45ec 70%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25) inset, 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.stat-chip {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.h-app-screen {
+  height: calc(100vh - 56px);
+}
+@media (min-width: 768px) {
+  .h-app-screen {
+    height: 100vh;
+  }
+}
+
+.glass-panel {
+  background: rgba(19, 15, 31, 0.72);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
 }

@@ -1,4 +1,6 @@
 import { PrismaClient, CardType, Rarity } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import { generateCardArt } from "./cardArt.js";
 
 const prisma = new PrismaClient();
 
@@ -68,13 +70,32 @@ const cards: CardSeed[] = [
 
 async function main() {
   for (const card of cards) {
+    const imageUrl = generateCardArt(card.name, card.rarity);
     await prisma.card.upsert({
       where: { name: card.name },
-      update: card,
-      create: card,
+      update: { ...card, imageUrl },
+      create: { ...card, imageUrl },
     });
   }
-  console.log(`Sembradas ${cards.length} cartas.`);
+  console.log(`Sembradas ${cards.length} cartas con arte generado.`);
+
+  const adminEmail = process.env.ADMIN_EMAIL ?? "admin@cartaverso.dev";
+  const adminUsername = process.env.ADMIN_USERNAME ?? "admin";
+  const adminPassword = process.env.ADMIN_PASSWORD ?? "cartaverso_admin_2026";
+  const passwordHash = await bcrypt.hash(adminPassword, 10);
+
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: { role: "ADMIN" },
+    create: {
+      email: adminEmail,
+      username: adminUsername,
+      passwordHash,
+      displayName: "Administrador",
+      role: "ADMIN",
+    },
+  });
+  console.log(`Usuario admin listo: ${adminUsername} / ${adminEmail}`);
 }
 
 main()

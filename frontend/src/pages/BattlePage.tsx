@@ -140,7 +140,7 @@ export function BattlePage() {
 
   if (status === "playing" && game) {
     return (
-      <div className="h-screen flex flex-col p-4 gap-3 overflow-hidden">
+      <div className="h-app-screen flex flex-col p-4 gap-3 overflow-hidden">
         {winnerLabel && (
           <div className="fixed inset-0 z-30 bg-black/70 flex items-center justify-center">
             <div className="card-surface p-8 text-center">
@@ -231,7 +231,7 @@ export function BattlePage() {
       <div className="w-16 h-16 rounded-2xl bg-arcane-500 flex items-center justify-center mx-auto mb-5 shadow-md">
         <Icon name="swords" size={28} className="text-white" />
       </div>
-      <h1 className="text-xl font-bold mb-1">Modo Batalla</h1>
+      <h1 className="text-xl font-bold font-display mb-1">Modo Batalla</h1>
       <p className="text-sm text-white/50 mb-8">Elegí un mazo de 30 cartas y buscá rival en tiempo real.</p>
 
       {decks.length === 0 ? (

@@ -36,10 +36,10 @@ authRouter.post("/register", async (req, res) => {
     data: { email, username, passwordHash, displayName: displayName ?? username },
   });
 
-  const token = signToken({ userId: user.id, username: user.username });
+  const token = signToken({ userId: user.id, username: user.username, role: user.role });
   res.status(201).json({
     token,
-    user: { id: user.id, username: user.username, displayName: user.displayName, avatarUrl: user.avatarUrl },
+    user: { id: user.id, username: user.username, displayName: user.displayName, avatarUrl: user.avatarUrl, role: user.role },
   });
 });
 
@@ -66,10 +66,13 @@ authRouter.post("/login", async (req, res) => {
   if (!valid) {
     return res.status(401).json({ error: "Credenciales inválidas" });
   }
+  if (user.banned) {
+    return res.status(403).json({ error: user.banReason ? `Cuenta suspendida: ${user.banReason}` : "Cuenta suspendida" });
+  }
 
-  const token = signToken({ userId: user.id, username: user.username });
+  const token = signToken({ userId: user.id, username: user.username, role: user.role });
   res.json({
     token,
-    user: { id: user.id, username: user.username, displayName: user.displayName, avatarUrl: user.avatarUrl },
+    user: { id: user.id, username: user.username, displayName: user.displayName, avatarUrl: user.avatarUrl, role: user.role },
   });
 });

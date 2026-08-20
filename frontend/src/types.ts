@@ -4,6 +4,46 @@ export interface User {
   displayName?: string | null;
   avatarUrl?: string | null;
   bio?: string | null;
+  role?: "USER" | "ADMIN";
+}
+
+export interface Conversation {
+  id: string;
+  otherUser: { id: string; username: string; displayName?: string | null; avatarUrl?: string | null };
+  lastMessage: Message | null;
+  unread: number;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface AdminMetrics {
+  userCount: number;
+  matchCount: number;
+  postCount: number;
+  cardCount: number;
+  deckCount: number;
+  matchesToday: number;
+  topCards: { card: Card | null; count: number }[];
+  usersLast7Days: { day: string; count: number }[];
+}
+
+export interface AdminUser {
+  id: string;
+  username: string;
+  displayName?: string | null;
+  email: string;
+  role: "USER" | "ADMIN";
+  banned: boolean;
+  banReason?: string | null;
+  createdAt: string;
+  _count: { posts: number; decks: number; matchesAsP1: number; matchesAsP2: number };
 }
 
 export interface Card {
@@ -69,6 +109,7 @@ export interface CardInstance {
   health: number | null;
   currentHealth: number | null;
   effectKey: string | null;
+  imageUrl?: string | null;
   hasAttacked: boolean;
   summoningSick: boolean;
   divineShield: boolean;

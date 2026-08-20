@@ -36,6 +36,19 @@ export const api = {
   put: <T>(path: string, data?: unknown) =>
     request<T>(path, { method: "PUT", body: data ? JSON.stringify(data) : undefined }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
+  upload: async <T>(path: string, file: File): Promise<T> => {
+    const token = getToken();
+    const form = new FormData();
+    form.append("image", file);
+    const res = await fetch(`${API_URL}${path}`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: form,
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error ?? "Error al subir la imagen");
+    return body as T;
+  },
 };
 
 export { API_URL };

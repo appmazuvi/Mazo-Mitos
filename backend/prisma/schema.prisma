@@ -26,6 +26,11 @@ enum MatchStatus {
   ABANDONED
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -34,6 +39,9 @@ model User {
   displayName  String?
   avatarUrl    String?
   bio          String?
+  role         Role     @default(USER)
+  banned       Boolean  @default(false)
+  banReason    String?
   createdAt    DateTime @default(now())
 
   decks         Deck[]
@@ -49,6 +57,10 @@ model User {
   matchesWon    Match[]  @relation("Winner")
 
   notifications Notification[] @relation("NotificationTarget")
+
+  conversationsA Conversation[] @relation("ParticipantA")
+  conversationsB Conversation[] @relation("ParticipantB")
+  messagesSent   Message[]      @relation("MessageSender")
 }
 
 model Follow {
@@ -154,6 +166,7 @@ enum NotificationType {
   COMMENT
   MATCH_INVITE
   MATCH_RESULT
+  MESSAGE
 }
 
 model Notification {
@@ -164,4 +177,28 @@ model Notification {
   message   String
   read      Boolean          @default(false)
   createdAt DateTime         @default(now())
+}
+
+model Conversation {
+  id              String   @id @default(cuid())
+  participantA    User     @relation("ParticipantA", fields: [participantAId], references: [id])
+  participantAId  String
+  participantB    User     @relation("ParticipantB", fields: [participantBId], references: [id])
+  participantBId  String
+  createdAt       DateTime @default(now())
+
+  messages Message[]
+
+  @@unique([participantAId, participantBId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+  sender         User         @relation("MessageSender", fields: [senderId], references: [id])
+  senderId       String
+  content        String
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
 }

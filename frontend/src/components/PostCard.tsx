@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { Icon } from "./Icon";
 import type { Comment, Post } from "../types";
 
 export function PostCard({ post }: { post: Post }) {
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(post.likedByMe ?? false);
   const [likeCount, setLikeCount] = useState(post._count.likes);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -42,9 +43,9 @@ export function PostCard({ post }: { post: Post }) {
 
   return (
     <div className="card-surface p-5">
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-arcane-800 flex items-center justify-center text-sm font-semibold shrink-0">
-          {(post.author.displayName ?? post.author.username)[0].toUpperCase()}
+      <Link to={`/perfil/${post.author.username}`} className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-full bg-arcane-800 flex items-center justify-center text-sm font-semibold shrink-0 overflow-hidden">
+          {post.author.avatarUrl ? <img src={post.author.avatarUrl} className="w-full h-full object-cover" /> : (post.author.displayName ?? post.author.username)[0].toUpperCase()}
         </div>
         <div>
           <p className="text-sm font-medium">{post.author.displayName ?? post.author.username}</p>
@@ -52,7 +53,7 @@ export function PostCard({ post }: { post: Post }) {
             @{post.author.username} · {new Date(post.createdAt).toLocaleDateString("es-AR")}
           </p>
         </div>
-      </div>
+      </Link>
 
       <p className="mt-3 text-sm leading-relaxed whitespace-pre-wrap">{post.content}</p>
       {post.imageUrl && <img src={post.imageUrl} alt="" className="mt-3 rounded-lg max-h-96 w-full object-cover" />}

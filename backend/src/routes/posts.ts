@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../prisma.js";
-import { requireAuth, type AuthedRequest } from "../auth.js";
+import { requireAuth, optionalAuth, type AuthedRequest } from "../auth.js";
+import { pushToUser } from "../realtime.js";
 
 export const postsRouter = Router();
 
@@ -9,6 +10,16 @@ const postInclude = {
   author: { select: { username: true, displayName: true, avatarUrl: true } },
   _count: { select: { comments: true, likes: true } },
 };
+
+async function attachLikedByMe<T extends { id: string }>(posts: T[], userId?: string) {
+  if (!userId || posts.length === 0) return posts.map((p) => ({ ...p, likedByMe: false }));
+  const likes = await prisma.like.findMany({
+    where: { userId, postId: { in: posts.map((p) => p.id) } },
+    select: { postId: true },
+  });
+  const likedSet = new Set(likes.map((l) => l.postId));
+  return posts.map((p) => ({ ...p, likedByMe: likedSet.has(p.id) }));
+}
 
 postsRouter.get("/feed", requireAuth, async (req: AuthedRequest, res) => {
   const following = await prisma.follow.findMany({
@@ -23,16 +34,16 @@ postsRouter.get("/feed", requireAuth, async (req: AuthedRequest, res) => {
     orderBy: { createdAt: "desc" },
     take: 50,
   });
-  res.json(posts);
+  res.json(await attachLikedByMe(posts, req.user!.userId));
 });
 
-postsRouter.get("/explore", async (_req, res) => {
+postsRouter.get("/explore", optionalAuth, async (req: AuthedRequest, res) => {
   const posts = await prisma.post.findMany({
     include: postInclude,
     orderBy: { createdAt: "desc" },
     take: 50,
   });
-  res.json(posts);
+  res.json(await attachLikedByMe(posts, req.user?.userId));
 });
 
 const createPostSchema = z.object({
@@ -50,7 +61,7 @@ postsRouter.post("/", requireAuth, async (req: AuthedRequest, res) => {
     data: { authorId: req.user!.userId, ...parsed.data },
     include: postInclude,
   });
-  res.status(201).json(post);
+  res.status(201).json({ ...post, likedByMe: false });
 });
 
 postsRouter.delete("/:id", requireAuth, async (req: AuthedRequest, res) => {
@@ -70,9 +81,9 @@ postsRouter.post("/:id/like", requireAuth, async (req: AuthedRequest, res) => {
     update: {},
   });
   if (post.authorId !== req.user!.userId) {
-    await prisma.notification.create({
-      data: { targetId: post.authorId, type: "LIKE", message: `${req.user!.username} le dio like a tu post` },
-    });
+    const message = `${req.user!.username} le dio like a tu post`;
+    await prisma.notification.create({ data: { targetId: post.authorId, type: "LIKE", message } });
+    pushToUser(post.authorId, "notification:new", { type: "LIKE", message });
   }
   res.status(204).end();
 });
@@ -105,9 +116,9 @@ postsRouter.post("/:id/comments", requireAuth, async (req: AuthedRequest, res) =
     include: { author: { select: { username: true, displayName: true, avatarUrl: true } } },
   });
   if (post.authorId !== req.user!.userId) {
-    await prisma.notification.create({
-      data: { targetId: post.authorId, type: "COMMENT", message: `${req.user!.username} comentó tu post` },
-    });
+    const message = `${req.user!.username} comentó tu post`;
+    await prisma.notification.create({ data: { targetId: post.authorId, type: "COMMENT", message } });
+    pushToUser(post.authorId, "notification:new", { type: "COMMENT", message });
   }
   res.status(201).json(comment);
 });

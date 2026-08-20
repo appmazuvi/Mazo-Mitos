@@ -19,7 +19,7 @@ export function CardsPage() {
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 pb-24 md:pb-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold">Colección</h1>
+        <h1 className="text-xl font-bold font-display">Colección</h1>
         <input
           className="input-field text-sm w-48"
           placeholder="Buscar carta..."

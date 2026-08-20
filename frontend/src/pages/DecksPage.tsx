@@ -18,7 +18,7 @@ export function DecksPage() {
   return (
     <div className="max-w-3xl mx-auto py-8 px-4 pb-24 md:pb-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold">Tus mazos</h1>
+        <h1 className="text-xl font-bold font-display">Tus mazos</h1>
         <Link to="/mazos/nuevo" className="btn-primary px-4 py-2 text-sm flex items-center gap-2">
           <Icon name="plus" size={16} />
           Nuevo mazo

@@ -26,6 +26,7 @@ function toInstance(template: CardTemplate): CardInstance {
     health: template.health,
     currentHealth: template.health,
     effectKey: template.effectKey,
+    imageUrl: template.imageUrl,
     hasAttacked: false,
     summoningSick: true,
     divineShield: false,

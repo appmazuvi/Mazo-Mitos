@@ -1,7 +1,7 @@
 import type { Server, Socket } from "socket.io";
 import { prisma } from "../prisma.js";
-import { verifyToken } from "../auth.js";
 import { applyAction, createGame, serializeStateFor } from "./engine.js";
+import { pushToUser } from "../realtime.js";
 import type { CardTemplate, GameAction, GameState } from "./types.js";
 
 interface QueueEntry {
@@ -35,6 +35,7 @@ async function loadDeckEntries(deckId: string, userId: string) {
       attack: dc.card.attack,
       health: dc.card.health,
       effectKey: dc.card.effectKey,
+      imageUrl: dc.card.imageUrl,
       description: dc.card.description,
     } as CardTemplate,
     quantity: dc.quantity,
@@ -53,10 +54,9 @@ async function finishMatch(matchId: string, match: ActiveMatch) {
     data: { status: "FINISHED", winnerId: match.state.winnerId, finishedAt: new Date() },
   });
   for (const userId of Object.keys(match.sockets)) {
-    if (userId !== match.state.winnerId) continue;
-    await prisma.notification.create({
-      data: { targetId: userId, type: "MATCH_RESULT", message: "¡Ganaste tu partida!" },
-    });
+    const message = userId === match.state.winnerId ? "¡Ganaste tu partida!" : "Perdiste tu partida.";
+    await prisma.notification.create({ data: { targetId: userId, type: "MATCH_RESULT", message } });
+    pushToUser(userId, "notification:new", { type: "MATCH_RESULT", message });
   }
   activeMatches.delete(matchId);
   for (const socket of Object.values(match.sockets)) socketToMatch.delete(socket.id);
@@ -91,19 +91,6 @@ async function tryMatchmake(io: Server) {
 }
 
 export function registerGameSocket(io: Server) {
-  io.use((socket, next) => {
-    try {
-      const token = socket.handshake.auth?.token as string | undefined;
-      if (!token) return next(new Error("No autenticado"));
-      const payload = verifyToken(token);
-      socket.data.userId = payload.userId;
-      socket.data.username = payload.username;
-      next();
-    } catch {
-      next(new Error("Token inválido"));
-    }
-  });
-
   io.on("connection", (socket: Socket) => {
     socket.on("queue:join", async ({ deckId }: { deckId: string }) => {
       if (queue.some((q) => q.userId === socket.data.userId)) return;

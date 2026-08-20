@@ -34,15 +34,15 @@ export function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "var(--bg)" }}>
       <div className="w-full max-w-sm">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-10 h-10 rounded-lg bg-arcane-500 flex items-center justify-center shadow-md">
-            <Icon name="bolt" size={20} className="text-white" />
+        <div className="flex items-center justify-center gap-2.5 mb-8">
+          <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-arcane-400 to-arcane-700 flex items-center justify-center shadow-md">
+            <Icon name="bolt" size={22} className="text-white" />
           </div>
-          <span className="text-xl font-bold tracking-tight">CartaVerso</span>
+          <span className="text-2xl font-bold font-display tracking-wide">CartaVerso</span>
         </div>
 
-        <div className="card-surface p-7">
-          <h1 className="text-lg font-semibold mb-1">{mode === "login" ? "Iniciar sesión" : "Crear cuenta"}</h1>
+        <div className="card-frame p-7" style={{ ["--frame-color" as string]: "#8f6bff" }}>
+          <h1 className="text-lg font-semibold font-display mb-1">{mode === "login" ? "Iniciar sesión" : "Crear cuenta"}</h1>
           <p className="text-sm text-white/50 mb-6">
             {mode === "login" ? "Volvé al multiverso de Aralon." : "Uníte a la batalla de cartas."}
           </p>

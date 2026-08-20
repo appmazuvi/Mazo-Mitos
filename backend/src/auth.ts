@@ -6,6 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET ?? "change-me-in-production";
 export interface AuthPayload {
   userId: string;
   username: string;
+  role: "USER" | "ADMIN";
 }
 
 export function signToken(payload: AuthPayload): string {
@@ -31,4 +32,23 @@ export function requireAuth(req: AuthedRequest, res: Response, next: NextFunctio
   } catch {
     return res.status(401).json({ error: "Token inválido o expirado" });
   }
+}
+
+export function optionalAuth(req: AuthedRequest, _res: Response, next: NextFunction) {
+  const header = req.headers.authorization;
+  if (header?.startsWith("Bearer ")) {
+    try {
+      req.user = verifyToken(header.slice(7));
+    } catch {
+      // ignore invalid token, treat as anonymous
+    }
+  }
+  next();
+}
+
+export function requireAdmin(req: AuthedRequest, res: Response, next: NextFunction) {
+  if (req.user?.role !== "ADMIN") {
+    return res.status(403).json({ error: "Requiere permisos de administrador" });
+  }
+  next();
 }

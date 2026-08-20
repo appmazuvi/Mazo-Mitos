@@ -9,6 +9,7 @@ export interface CardTemplate {
   health: number | null;
   effectKey: string | null;
   description: string;
+  imageUrl: string | null;
 }
 
 export interface CardInstance {
@@ -21,6 +22,7 @@ export interface CardInstance {
   health: number | null;
   currentHealth: number | null;
   effectKey: string | null;
+  imageUrl: string | null;
   hasAttacked: boolean;
   summoningSick: boolean;
   divineShield: boolean;

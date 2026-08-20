@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../prisma.js";
 import { requireAuth, type AuthedRequest } from "../auth.js";
+import { pushToUser } from "../realtime.js";
 
 export const usersRouter = Router();
 
@@ -13,6 +14,7 @@ usersRouter.get("/:username", async (req, res) => {
       displayName: true,
       avatarUrl: true,
       bio: true,
+      role: true,
       createdAt: true,
       _count: { select: { followers: true, following: true, posts: true } },
     },
@@ -44,9 +46,9 @@ usersRouter.post("/:username/follow", requireAuth, async (req: AuthedRequest, re
     create: { followerId: req.user!.userId, followingId: target.id },
     update: {},
   });
-  await prisma.notification.create({
-    data: { targetId: target.id, type: "FOLLOW", message: `${req.user!.username} empezó a seguirte` },
-  });
+  const message = `${req.user!.username} empezó a seguirte`;
+  await prisma.notification.create({ data: { targetId: target.id, type: "FOLLOW", message } });
+  pushToUser(target.id, "notification:new", { type: "FOLLOW", message });
   res.status(204).end();
 });
 

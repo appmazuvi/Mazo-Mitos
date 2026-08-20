@@ -1,10 +1,11 @@
 import type { Card } from "../types";
+import { Icon } from "./Icon";
 
-const rarityStyles: Record<Card["rarity"], { border: string; text: string; label: string }> = {
-  COMUN: { border: "border-white/15", text: "text-white/60", label: "Común" },
-  RARA: { border: "border-sky-500/40", text: "text-sky-400", label: "Rara" },
-  EPICA: { border: "border-arcane-500/50", text: "text-arcane-300", label: "Épica" },
-  LEGENDARIA: { border: "border-amber-400/50", text: "text-amber-300", label: "Legendaria" },
+const rarityStyles: Record<Card["rarity"], { text: string; label: string }> = {
+  COMUN: { text: "text-white/55", label: "Común" },
+  RARA: { text: "text-sky-400", label: "Rara" },
+  EPICA: { text: "text-arcane-300", label: "Épica" },
+  LEGENDARIA: { text: "text-amber-300", label: "Legendaria" },
 };
 
 interface CardTileProps {
@@ -20,33 +21,47 @@ export function CardTile({ card, quantity, onClick, actionLabel }: CardTileProps
     <button
       onClick={onClick}
       disabled={!onClick}
-      className={`relative flex flex-col justify-between p-3 h-40 rounded-lg border ${style.border} bg-[var(--bg-elevated)] text-left transition hover:-translate-y-0.5 hover:shadow-md ${onClick ? "cursor-pointer" : "cursor-default"}`}
+      className={`card-frame rarity-${card.rarity} relative flex flex-col text-left transition hover:-translate-y-1 overflow-hidden ${onClick ? "cursor-pointer" : "cursor-default"}`}
     >
-      <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-arcane-500 text-white text-xs font-bold flex items-center justify-center">
-        {card.cost}
-      </div>
-      {quantity !== undefined && quantity > 0 && (
-        <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-white/10 text-white text-xs font-bold flex items-center justify-center">
-          {quantity}
+      {card.imageUrl && (
+        <div className="relative h-20 shrink-0 overflow-hidden">
+          <img src={card.imageUrl} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-[#171225] to-transparent" />
         </div>
       )}
-      <div className="mt-6">
-        <p className="text-sm font-semibold leading-tight pr-6">{card.name}</p>
-        <p className={`text-[11px] mt-1 ${style.text}`}>{style.label}</p>
-      </div>
-      <p className="text-[11px] text-white/50 line-clamp-2">{card.description}</p>
-      <div className="flex items-center justify-between text-xs font-semibold">
-        {card.type === "CREATURE" ? (
-          <>
-            <span className="text-orange-300">{card.attack} ATK</span>
-            <span className="text-emerald-300">{card.health} VID</span>
-          </>
-        ) : (
-          <span className="text-white/40 uppercase tracking-wide text-[10px]">Hechizo</span>
+      <div className="relative flex flex-col justify-between p-3 pt-2 flex-1">
+        <div className="cost-gem absolute -top-6 right-2 w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center font-display stat-chip border-2 border-[#171225]">
+          {card.cost}
+        </div>
+        {quantity !== undefined && quantity > 0 && (
+          <div className="absolute -top-6 left-2 w-6 h-6 rounded-full bg-black/60 border-2 border-[#171225] text-white text-xs font-bold flex items-center justify-center">
+            {quantity}
+          </div>
         )}
+        <div>
+          <p className="text-sm font-semibold leading-tight pr-1 font-display">{card.name}</p>
+          <p className={`text-[11px] mt-0.5 uppercase tracking-wide ${style.text}`}>{style.label}</p>
+        </div>
+        <p className="text-[11px] text-white/50 line-clamp-2 mt-1">{card.description}</p>
+        <div className="flex items-center justify-between text-xs font-bold mt-1.5">
+          {card.type === "CREATURE" ? (
+            <>
+              <span className="flex items-center gap-1 text-orange-300 stat-chip">
+                <Icon name="swords" size={12} /> {card.attack}
+              </span>
+              <span className="flex items-center gap-1 text-emerald-300 stat-chip">
+                <Icon name="heartFilled" size={12} filled /> {card.health}
+              </span>
+            </>
+          ) : (
+            <span className="flex items-center gap-1 text-arcane-300 uppercase tracking-wide text-[10px]">
+              <Icon name="bolt" size={12} /> Hechizo
+            </span>
+          )}
+        </div>
       </div>
       {actionLabel && (
-        <div className="absolute inset-0 rounded-lg bg-black/60 opacity-0 hover:opacity-100 flex items-center justify-center text-xs font-semibold transition">
+        <div className="absolute inset-0 rounded-[inherit] bg-black/65 opacity-0 hover:opacity-100 flex items-center justify-center text-xs font-semibold font-display tracking-wide transition">
           {actionLabel}
         </div>
       )}
