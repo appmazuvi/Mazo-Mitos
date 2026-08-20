@@ -23,6 +23,7 @@ import { verifyToken } from "./auth.js";
 import { ensureAchievementsSeeded } from "./achievements.js";
 
 const app = express();
+app.set("trust proxy", 1);
 const corsOrigin = process.env.CORS_ORIGIN ?? "http://localhost:5173";
 
 const uploadDir = path.join(process.cwd(), "uploads");
