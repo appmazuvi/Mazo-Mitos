@@ -97,8 +97,8 @@ export function DeckEditorPage() {
     .sort((a, b) => a.card.cost - b.card.cost);
 
   return (
-    <div className="max-w-6xl mx-auto py-8 px-4 pb-24 md:pb-8 grid lg:grid-cols-[1fr_320px] gap-6">
-      <div>
+    <div className="max-w-6xl mx-auto py-8 px-4 pb-24 md:pb-8 flex flex-col lg:grid lg:grid-cols-[1fr_320px] gap-6">
+      <div className="order-2 lg:order-1">
         <div className="flex items-center gap-3 mb-6">
           <input
             className="input-field text-lg font-bold bg-transparent border-none px-0 flex-1"
@@ -119,7 +119,7 @@ export function DeckEditorPage() {
         </div>
       </div>
 
-      <div className="card-surface p-5 h-fit sticky top-8">
+      <div className="order-1 lg:order-2 card-surface p-5 h-fit lg:sticky lg:top-8">
         <div className="flex items-center justify-between mb-1">
           <p className="font-semibold">Tu mazo</p>
           <span className={`text-sm font-semibold ${total === DECK_SIZE ? "text-emerald-400" : "text-white/50"}`}>
