@@ -5,6 +5,7 @@ import { useAuth } from "../lib/AuthContext";
 import { ImageUploadButton } from "../components/ImageUploadButton";
 import { CardTile } from "../components/CardTile";
 import { Icon } from "../components/Icon";
+import { LoadingState } from "../components/Loading";
 import type { ProfileData } from "../types";
 
 export function ProfilePage() {
@@ -52,7 +53,7 @@ export function ProfilePage() {
     setProfile((p) => (p ? { ...p, coverUrl: url } : p));
   }
 
-  if (!profile) return <div className="p-8 text-white/40 text-sm">Cargando...</div>;
+  if (!profile) return <LoadingState />;
 
   const isMe = user?.username === profile.username;
   const winRate = profile.wins + profile.losses > 0 ? Math.round((profile.wins / (profile.wins + profile.losses)) * 100) : 0;

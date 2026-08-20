@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { api } from "../lib/api";
@@ -60,6 +61,9 @@ export function AuthPage() {
         }}
       >
         <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.5) 1px, transparent 0), radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,0.4) 1px, transparent 0), radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,0.3) 1px, transparent 0)", backgroundSize: "180px 180px" }} />
+        <div className="ambient-orb w-72 h-72" style={{ top: "8%", left: "-6%", background: "rgba(255,138,61,0.25)" }} />
+        <div className="ambient-orb w-64 h-64" style={{ top: "55%", right: "-4%", background: "rgba(95,212,255,0.2)", animationDelay: "-3s" }} />
+        <div className="ambient-orb w-56 h-56" style={{ bottom: "-8%", left: "35%", background: "rgba(201,139,255,0.22)", animationDelay: "-6s" }} />
 
         <div className="relative flex items-center gap-3 shrink-0">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-arcane-400 to-arcane-700 flex items-center justify-center shadow-lg">
@@ -71,13 +75,22 @@ export function AuthPage() {
         <div className="relative flex-1 flex flex-col items-center justify-center gap-10 min-h-0">
           <div className="relative w-full max-w-md h-56 shrink-0">
             {showcase.map((card, i) => (
-              <div
+              <motion.div
                 key={card.id}
-                className="card-frame absolute w-32 h-44 top-1/2 left-1/2 transition-transform duration-500"
+                className="card-frame absolute w-32 h-44 top-1/2 left-1/2"
+                initial={{ opacity: 0, x: `calc(-50% + ${(i - 2) * 74}px)`, y: `calc(-50% + 60px)`, rotate: rotations[i] * 2.5, scale: 0.85 }}
+                animate={{
+                  opacity: 1,
+                  x: `calc(-50% + ${(i - 2) * 74}px)`,
+                  y: `calc(-50% + ${lifts[i]}px)`,
+                  rotate: rotations[i],
+                  scale: 1,
+                }}
+                transition={{ delay: i * 0.09, duration: 0.6, ease: "easeOut" }}
+                whileHover={{ y: `calc(-50% + ${lifts[i] - 10}px)`, transition: { duration: 0.2 } }}
                 style={{
                   ["--frame-color" as string]:
                     card.rarity === "LEGENDARIA" ? "#e8b64c" : card.rarity === "EPICA" ? "#b06bff" : card.rarity === "RARA" ? "#4fa3ff" : "#9aa0b4",
-                  transform: `translate(-50%, -50%) translateX(${(i - 2) * 74}px) translateY(${lifts[i]}px) rotate(${rotations[i]}deg)`,
                   boxShadow: "0 20px 40px -10px rgba(0,0,0,0.6)",
                   zIndex: i,
                 }}
@@ -86,7 +99,7 @@ export function AuthPage() {
                 <div className="p-2">
                   <p className="text-[11px] font-display font-semibold leading-tight">{card.name}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
 

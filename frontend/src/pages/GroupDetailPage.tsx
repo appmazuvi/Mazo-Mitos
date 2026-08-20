@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { useAuth } from "../lib/AuthContext";
 import { PostCard } from "../components/PostCard";
 import { Icon } from "../components/Icon";
+import { LoadingState } from "../components/Loading";
 import type { Group, Post } from "../types";
 
 interface Member {
@@ -44,7 +45,7 @@ export function GroupDetailPage() {
     setContent("");
   }
 
-  if (!group) return <div className="p-8 text-white/40 text-sm">Cargando...</div>;
+  if (!group) return <LoadingState />;
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4 pb-24 md:pb-8">

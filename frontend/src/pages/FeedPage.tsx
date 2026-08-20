@@ -5,6 +5,7 @@ import { PostCard } from "../components/PostCard";
 import { ImageUploadButton } from "../components/ImageUploadButton";
 import { StoriesBar } from "../components/StoriesBar";
 import { Icon } from "../components/Icon";
+import { LoadingState } from "../components/Loading";
 import type { Post } from "../types";
 
 export function FeedPage({ mode = "feed" }: { mode?: "feed" | "explore" }) {
@@ -81,7 +82,7 @@ export function FeedPage({ mode = "feed" }: { mode?: "feed" | "explore" }) {
       )}
 
       {loading ? (
-        <p className="text-white/40 text-sm">Cargando...</p>
+        <LoadingState />
       ) : posts.length === 0 ? (
         <div className="card-surface p-8 text-center text-white/50 text-sm">
           {mode === "feed" ? "Seguí a otros jugadores para ver sus publicaciones acá." : "Todavía no hay publicaciones."}

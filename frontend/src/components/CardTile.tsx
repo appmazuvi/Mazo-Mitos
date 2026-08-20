@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import type { Card } from "../types";
 import { Icon } from "./Icon";
 
@@ -31,15 +32,19 @@ interface CardTileProps {
   quantity?: number;
   onClick?: () => void;
   actionLabel?: string;
+  index?: number;
 }
 
-export function CardTile({ card, quantity, onClick, actionLabel }: CardTileProps) {
+export function CardTile({ card, quantity, onClick, actionLabel, index = 0 }: CardTileProps) {
   const style = rarityStyles[card.rarity];
   const keyword = card.type === "CREATURE" ? KEYWORD_INFO[card.effectKey ?? ""] : spellEffectInfo(card.effectKey);
   const isFoil = card.rarity === "EPICA" || card.rarity === "LEGENDARIA";
 
   return (
-    <button
+    <motion.button
+      initial={{ opacity: 0, y: 14, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.25, delay: Math.min(index * 0.03, 0.4), ease: "easeOut" }}
       onClick={onClick}
       disabled={!onClick}
       className={`card-frame rarity-${card.rarity} relative flex flex-col text-left transition hover:-translate-y-1 overflow-hidden ${onClick ? "cursor-pointer" : "cursor-default"}`}
@@ -109,6 +114,6 @@ export function CardTile({ card, quantity, onClick, actionLabel }: CardTileProps
           {actionLabel}
         </div>
       )}
-    </button>
+    </motion.button>
   );
 }

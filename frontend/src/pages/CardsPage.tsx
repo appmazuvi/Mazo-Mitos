@@ -28,8 +28,8 @@ export function CardsPage() {
         />
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        {filtered.map((card) => (
-          <CardTile key={card.id} card={card} />
+        {filtered.map((card, i) => (
+          <CardTile key={card.id} card={card} index={i} />
         ))}
       </div>
     </div>

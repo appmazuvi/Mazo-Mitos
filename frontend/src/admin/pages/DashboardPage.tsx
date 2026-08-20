@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import { Icon } from "../../components/Icon";
+import { LoadingState } from "../../components/Loading";
 import type { AdminMetrics } from "../../types";
 
 const stats: { key: keyof AdminMetrics; label: string; icon: "users" | "swords" | "message" | "layers" | "deck" }[] = [
@@ -19,7 +20,7 @@ export function DashboardPage() {
     api.get<AdminMetrics>("/api/admin/metrics").then(setMetrics);
   }, []);
 
-  if (!metrics) return <div className="p-8 text-white/40 text-sm">Cargando...</div>;
+  if (!metrics) return <LoadingState />;
 
   const maxUsers = Math.max(1, ...metrics.usersLast7Days.map((d) => d.count));
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { Icon } from "../components/Icon";
+import { LoadingState } from "../components/Loading";
 import type { Deck } from "../types";
 
 export function DecksPage() {
@@ -44,7 +45,7 @@ export function DecksPage() {
       </div>
 
       {loading ? (
-        <p className="text-white/40 text-sm">Cargando...</p>
+        <LoadingState />
       ) : decks.length === 0 ? (
         <div className="card-surface p-8 text-center text-white/50 text-sm">Todavía no armaste ningún mazo.</div>
       ) : (

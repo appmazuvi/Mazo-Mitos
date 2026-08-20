@@ -1,4 +1,5 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "../lib/AuthContext";
 import { useNotifications } from "../lib/NotificationsContext";
 import { Icon } from "./Icon";
@@ -21,6 +22,7 @@ export function Layout() {
   const { user, logout } = useAuth();
   const { unreadMessages } = useNotifications();
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <div className="min-h-screen flex" style={{ background: "var(--bg)" }}>
@@ -109,7 +111,17 @@ export function Layout() {
       </header>
 
       <main className="flex-1 min-w-0 pt-14 md:pt-0">
-        <Outlet />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 md:hidden border-t border-white/10 bg-[var(--bg-elevated)] flex justify-around py-2 z-20">
