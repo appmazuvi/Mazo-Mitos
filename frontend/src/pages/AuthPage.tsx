@@ -155,7 +155,7 @@ export function AuthPage() {
 
               {error && <p className="text-sm text-red-400">{error}</p>}
 
-              <button type="submit" disabled={loading} className="btn-gold w-full py-2.5 mt-1 font-display tracking-wide">
+              <button type="submit" disabled={loading} className="btn-primary w-full py-2.5 mt-1">
                 {loading ? "Cargando..." : mode === "login" ? "Entrar" : "Crear cuenta"}
               </button>
             </form>
@@ -164,7 +164,7 @@ export function AuthPage() {
           <p className="text-center text-sm text-white/50 mt-5">
             {mode === "login" ? "¿No tenés cuenta?" : "¿Ya tenés cuenta?"}{" "}
             <button
-              className="text-amber-300 font-medium"
+              className="text-arcane-300 font-medium"
               onClick={() => {
                 setError(null);
                 setMode(mode === "login" ? "register" : "login");

@@ -30,7 +30,7 @@ export function CardTile({ card, quantity, onClick, actionLabel }: CardTileProps
         </div>
       )}
       <div className="relative flex flex-col justify-between p-3 pt-2 flex-1">
-        <div className="cost-gem absolute -top-6 right-2 w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center font-display stat-chip border-2 border-[#171225]">
+        <div className="cost-gem absolute -top-6 right-2 w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center font-thematic stat-chip border-2 border-[#171225]">
           {card.cost}
         </div>
         {quantity !== undefined && quantity > 0 && (
@@ -39,7 +39,7 @@ export function CardTile({ card, quantity, onClick, actionLabel }: CardTileProps
           </div>
         )}
         <div>
-          <p className="text-sm font-semibold leading-tight pr-1 font-display">{card.name}</p>
+          <p className="text-sm font-semibold leading-tight pr-1 font-thematic">{card.name}</p>
           <p className={`text-[11px] mt-0.5 uppercase tracking-wide ${style.text}`}>{style.label}</p>
         </div>
         <p className="text-[11px] text-white/50 line-clamp-2 mt-1">{card.description}</p>
@@ -61,7 +61,7 @@ export function CardTile({ card, quantity, onClick, actionLabel }: CardTileProps
         </div>
       </div>
       {actionLabel && (
-        <div className="absolute inset-0 rounded-[inherit] bg-black/65 opacity-0 hover:opacity-100 flex items-center justify-center text-xs font-semibold font-display tracking-wide transition">
+        <div className="absolute inset-0 rounded-[inherit] bg-black/65 opacity-0 hover:opacity-100 flex items-center justify-center text-xs font-semibold font-thematic tracking-wide transition">
           {actionLabel}
         </div>
       )}

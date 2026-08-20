@@ -3,21 +3,26 @@
 @tailwind utilities;
 
 :root {
-  --r-sm: 10px;
-  --r: 16px;
-  --r-lg: 22px;
-  --r-xl: 26px;
-  --shadow-xs: 0 1px 2px rgba(20, 10, 0, 0.4);
-  --shadow-sm: 0 3px 10px rgba(20, 10, 0, 0.45);
-  --shadow-md: 0 12px 30px rgba(20, 10, 0, 0.55);
+  --r-sm: 6px;
+  --r: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.36), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.34);
 
-  --bg: #140d08;
-  --bg-elevated: #1e140b;
-  --bg-card: #26190e;
-  --border: rgba(232, 182, 76, 0.22);
-  --text: #fbf3e6;
-  --text-muted: #cbb599;
+  --bg: #0a0a0d;
+  --bg-elevated: #101015;
+  --bg-card: #141419;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #f2f2f4;
+  --text-muted: #90909c;
 
+  --accent: #6a5cff;
+  --accent-soft: #8f84ff;
+  --accent-deep: #4c3fd6;
+
+  /* Reservado para cartas y mesa de batalla: no usar en la UI general */
   --gold: #f0b93d;
   --gold-soft: #ffe08a;
   --gold-deep: #a86a1c;
@@ -30,7 +35,8 @@
   --rarity-epica: #c463ff;
   --rarity-legendaria: #ffb43d;
 
-  --font-display: "Cinzel", "Inter", serif;
+  --font-display: "Inter", system-ui, sans-serif;
+  --font-thematic: "Cinzel", "Inter", serif;
 }
 
 * {
@@ -45,18 +51,22 @@ body,
 
 body {
   background:
-    radial-gradient(1100px 650px at 15% -10%, rgba(240, 185, 61, 0.14), transparent 58%),
-    radial-gradient(900px 600px at 100% 0%, rgba(196, 99, 255, 0.1), transparent 55%),
-    radial-gradient(1100px 850px at 50% 120%, rgba(90, 52, 23, 0.35), transparent 62%),
+    radial-gradient(1200px 560px at 50% -14%, rgba(106, 92, 255, 0.09), transparent 60%),
     var(--bg);
   background-attachment: fixed;
   color: var(--text);
   font-family: "Inter", system-ui, sans-serif;
-  letter-spacing: -0.011em;
+  letter-spacing: -0.006em;
 }
 
 h1, h2, h3, .font-display {
   font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.font-thematic {
+  font-family: var(--font-thematic);
   letter-spacing: 0.01em;
 }
 
@@ -65,7 +75,7 @@ h1, h2, h3, .font-display {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(240, 185, 61, 0.25);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 999px;
 }
 ::-webkit-scrollbar-track {
@@ -80,33 +90,34 @@ h1, h2, h3, .font-display {
 */
 @layer components {
   .card-surface {
-    background: linear-gradient(180deg, var(--bg-card), var(--bg-elevated));
+    background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-xs);
   }
 
   .btn-primary {
-    background: linear-gradient(180deg, #ffcf6b, #f0b93d 45%, #d68f1f);
-    color: #3a2005;
+    background: var(--accent);
+    color: #fff;
     border-radius: var(--r);
-    font-weight: 800;
-    box-shadow: 0 4px 0 #8a5613, 0 8px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.55);
-    border: 1px solid rgba(255, 224, 150, 0.7);
-    transition: filter 0.15s ease, transform 0.08s ease, box-shadow 0.08s ease;
+    font-weight: 600;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: var(--shadow-xs);
+    transition: background 0.15s ease, transform 0.05s ease;
   }
   .btn-primary:hover {
-    filter: brightness(1.08);
+    background: var(--accent-soft);
   }
   .btn-primary:active {
-    transform: translateY(3px);
-    box-shadow: 0 1px 0 #8a5613, 0 3px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transform: scale(0.98);
+    background: var(--accent-deep);
   }
   .btn-primary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
 
+  /* Reservado para CTAs dentro de cartas/batalla: bisel cálido intencional */
   .btn-gold {
     background: linear-gradient(180deg, var(--gold-soft), var(--gold));
     color: #2a1a05;
@@ -125,29 +136,29 @@ h1, h2, h3, .font-display {
   }
 
   .btn-ghost {
-    background: rgba(240, 185, 61, 0.06);
+    background: rgba(255, 255, 255, 0.04);
     color: var(--text);
     border: 1px solid var(--border);
     border-radius: var(--r);
     transition: background 0.15s ease, border-color 0.15s ease;
   }
   .btn-ghost:hover {
-    background: rgba(240, 185, 61, 0.14);
-    border-color: rgba(240, 185, 61, 0.4);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
   }
 
   .input-field {
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border);
     border-radius: var(--r-sm);
     color: var(--text);
-    padding: 0.65rem 0.85rem;
+    padding: 0.6rem 0.8rem;
     transition: box-shadow 0.15s ease, border-color 0.15s ease;
   }
   .input-field:focus {
     outline: none;
-    border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(240, 185, 61, 0.25);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(106, 92, 255, 0.22);
   }
 
   .nav-pill {
@@ -155,19 +166,18 @@ h1, h2, h3, .font-display {
     transition: background 0.15s ease, color 0.15s ease;
   }
   .nav-pill.active {
-    background: linear-gradient(180deg, #ffcf6b, #d68f1f);
-    color: #3a2005;
-    font-weight: 700;
-    box-shadow: 0 2px 10px rgba(240, 185, 61, 0.4);
+    background: rgba(106, 92, 255, 0.14);
+    color: var(--accent-soft);
+    font-weight: 600;
   }
   .nav-pill:not(.active):hover {
-    background: rgba(240, 185, 61, 0.1);
+    background: rgba(255, 255, 255, 0.05);
   }
 
   /* ---- Marcos de carta tallados en madera y oro ---- */
   .card-frame {
     position: relative;
-    border-radius: var(--r);
+    border-radius: var(--r-lg);
     background: linear-gradient(160deg, #382412 0%, #241407 55%, #170c04 100%);
     box-shadow: var(--shadow-sm), inset 0 0 0 1px rgba(0, 0, 0, 0.4);
     border: 3px solid var(--wood-dark);
@@ -187,7 +197,7 @@ h1, h2, h3, .font-display {
     content: "";
     position: absolute;
     inset: 5px;
-    border-radius: calc(var(--r) - 5px);
+    border-radius: calc(var(--r-lg) - 5px);
     border: 1px solid rgba(255, 255, 255, 0.14);
     pointer-events: none;
   }
@@ -215,7 +225,7 @@ h1, h2, h3, .font-display {
   }
 
   .glass-panel {
-    background: rgba(30, 20, 11, 0.78);
+    background: rgba(16, 16, 21, 0.78);
     backdrop-filter: blur(10px);
     border: 1px solid var(--border);
   }

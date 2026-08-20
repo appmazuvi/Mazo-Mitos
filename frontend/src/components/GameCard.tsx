@@ -46,10 +46,10 @@ export function GameCard({ card, size = "md", disabled, selected, targetable, at
         </div>
       )}
       <div className="relative p-1.5 h-full flex flex-col">
-        <div className="cost-gem absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center font-display">
+        <div className="cost-gem absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center font-thematic">
           {card.cost}
         </div>
-        <p className="text-[10px] font-semibold leading-tight mt-2 line-clamp-3 font-display stat-chip">{card.name}</p>
+        <p className="text-[10px] font-semibold leading-tight mt-2 line-clamp-3 font-thematic stat-chip">{card.name}</p>
         {card.type === "CREATURE" && (
           <div className="mt-auto flex justify-between text-[10px] font-bold stat-chip">
             <motion.span key={`atk-${card.attack}`} initial={{ scale: 1.6 }} animate={{ scale: 1 }} className="text-orange-300">
@@ -75,7 +75,7 @@ export function GameCard({ card, size = "md", disabled, selected, targetable, at
             animate={{ opacity: 1, y: -22, scale: 1.15 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.7 }}
-            className={`absolute top-1/2 left-1/2 -translate-x-1/2 font-display font-bold text-base pointer-events-none drop-shadow-[0_2px_3px_rgba(0,0,0,0.8)] ${
+            className={`absolute top-1/2 left-1/2 -translate-x-1/2 font-thematic font-bold text-base pointer-events-none drop-shadow-[0_2px_3px_rgba(0,0,0,0.8)] ${
               pulse.type === "damage" ? "text-red-400" : "text-emerald-300"
             }`}
           >

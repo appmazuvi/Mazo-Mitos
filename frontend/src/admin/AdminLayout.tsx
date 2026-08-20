@@ -12,12 +12,12 @@ export function AdminLayout() {
     <div className="min-h-screen flex" style={{ background: "var(--bg)" }}>
       <aside className="w-64 shrink-0 border-r border-white/5 p-5 flex flex-col gap-6">
         <Link to="/" className="flex items-center gap-2 px-2">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-300 to-amber-600 flex items-center justify-center shadow-md">
-            <Icon name="crown" size={18} className="text-black/70" />
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-arcane-400 to-arcane-700 flex items-center justify-center shadow-md">
+            <Icon name="crown" size={18} className="text-white" />
           </div>
           <div>
             <p className="text-sm font-bold font-display leading-none">CartaVerso</p>
-            <p className="text-[10px] text-amber-300/80 uppercase tracking-wider mt-0.5">Admin</p>
+            <p className="text-[10px] text-arcane-300/80 uppercase tracking-wider mt-0.5">Admin</p>
           </div>
         </Link>
 

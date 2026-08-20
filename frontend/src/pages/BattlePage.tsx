@@ -231,7 +231,7 @@ export function BattlePage() {
               className="fixed top-16 left-1/2 -translate-x-1/2 z-40 pointer-events-none"
             >
               <div
-                className="px-8 py-3 rounded-full font-display font-bold text-lg tracking-wider text-white border"
+                className="px-8 py-3 rounded-full font-thematic font-bold text-lg tracking-wider text-white border"
                 style={{
                   background: turnBanner.text.startsWith("¡TU") ? "linear-gradient(180deg,#f4d78a,#e8b64c)" : "rgba(19,15,31,0.9)",
                   color: turnBanner.text.startsWith("¡TU") ? "#2a1a05" : "#fff",
@@ -268,7 +268,7 @@ export function BattlePage() {
                 )}
                 <div className="relative">
                   <Icon name={winnerLabel ? "crown" : "skull" as any} size={40} className={winnerLabel ? "text-amber-300 mx-auto mb-3" : "text-white/40 mx-auto mb-3"} />
-                  <p className="text-2xl font-bold font-display mb-2">{winnerLabel ? "¡Victoria!" : "Derrota"}</p>
+                  <p className="text-2xl font-bold font-thematic mb-2">{winnerLabel ? "¡Victoria!" : "Derrota"}</p>
                   <p className="text-sm text-white/50 mb-6">{winnerLabel ? "Dominaste el multiverso de Aralon." : "El multiverso te espera para revancha."}</p>
                   <button
                     className={winnerLabel ? "btn-gold px-6 py-2.5" : "btn-primary px-6 py-2.5"}
@@ -387,7 +387,7 @@ export function BattlePage() {
       <div className="w-16 h-16 rounded-2xl bg-arcane-500 flex items-center justify-center mx-auto mb-5 shadow-md">
         <Icon name="swords" size={28} className="text-white" />
       </div>
-      <h1 className="text-xl font-bold font-display mb-1">Modo Batalla</h1>
+      <h1 className="text-xl font-bold font-thematic mb-1">Modo Batalla</h1>
       <p className="text-sm text-white/50 mb-8">Elegí un mazo de 30 cartas y buscá rival en tiempo real.</p>
 
       {decks.length === 0 ? (
@@ -422,7 +422,7 @@ export function BattlePage() {
 function PlayerBar({ label, life, energy, maxEnergy, pulse }: { label: string; life: number; energy: number; maxEnergy: number; pulse?: CardPulse | null }) {
   return (
     <div className="flex items-center justify-between px-3 py-1.5 rounded-xl glass-panel">
-      <span className="text-sm font-semibold font-display">{label}</span>
+      <span className="text-sm font-semibold font-thematic">{label}</span>
       <div className="flex items-center gap-4">
         <span className={`relative flex items-center gap-1.5 text-sm ${pulse ? "life-pulse" : ""} ${pulse?.type === "damage" ? "stat-flash-dmg" : pulse?.type === "heal" ? "stat-flash-heal" : ""}`} key={pulse?.key ?? "life"}>
           <Icon name="heartFilled" size={16} filled className="text-rose-400" />
@@ -435,7 +435,7 @@ function PlayerBar({ label, life, energy, maxEnergy, pulse }: { label: string; l
                 animate={{ opacity: 1, y: -18 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.8 }}
-                className={`absolute -top-1 left-6 font-display font-bold text-sm pointer-events-none ${pulse.type === "damage" ? "text-red-400" : "text-emerald-300"}`}
+                className={`absolute -top-1 left-6 font-thematic font-bold text-sm pointer-events-none ${pulse.type === "damage" ? "text-red-400" : "text-emerald-300"}`}
               >
                 {pulse.type === "damage" ? `-${pulse.value}` : `+${pulse.value}`}
               </motion.span>
