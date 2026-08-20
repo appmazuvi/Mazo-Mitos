@@ -1,8 +1,10 @@
 import { Router } from "express";
+import { z } from "zod";
 import { prisma } from "../prisma.js";
 import { requireAuth, optionalAuth, type AuthedRequest } from "../auth.js";
 import { pushToUser } from "../realtime.js";
 import { evaluateAchievements } from "../achievements.js";
+import { httpUrl } from "../validators.js";
 
 export const usersRouter = Router();
 
@@ -49,16 +51,20 @@ usersRouter.get("/:username", optionalAuth, async (req: AuthedRequest, res) => {
   res.json({ ...rest, wins, losses, rank: higherRated + 1, isFollowing });
 });
 
+const updateMeSchema = z.object({
+  displayName: z.string().max(40).optional(),
+  bio: z.string().max(280).optional(),
+  avatarUrl: httpUrl.optional(),
+  coverUrl: httpUrl.optional(),
+});
+
 usersRouter.put("/me", requireAuth, async (req: AuthedRequest, res) => {
-  const { displayName, bio, avatarUrl, coverUrl } = req.body ?? {};
+  const parsed = updateMeSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
+  const { displayName, bio, avatarUrl, coverUrl } = parsed.data;
   const user = await prisma.user.update({
     where: { id: req.user!.userId },
-    data: {
-      displayName: typeof displayName === "string" ? displayName.slice(0, 40) : undefined,
-      bio: typeof bio === "string" ? bio.slice(0, 280) : undefined,
-      avatarUrl: typeof avatarUrl === "string" ? avatarUrl : undefined,
-      coverUrl: typeof coverUrl === "string" ? coverUrl : undefined,
-    },
+    data: { displayName, bio, avatarUrl, coverUrl },
   });
   res.json({
     id: user.id,

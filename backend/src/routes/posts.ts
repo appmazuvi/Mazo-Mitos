@@ -4,6 +4,7 @@ import { prisma } from "../prisma.js";
 import { requireAuth, optionalAuth, type AuthedRequest } from "../auth.js";
 import { pushToUser } from "../realtime.js";
 import { evaluateAchievements } from "../achievements.js";
+import { httpUrl } from "../validators.js";
 
 export const postsRouter = Router();
 
@@ -72,8 +73,8 @@ postsRouter.get("/explore", optionalAuth, async (req: AuthedRequest, res) => {
 
 const createPostSchema = z.object({
   content: z.string().min(1).max(1000),
-  imageUrl: z.string().url().optional(),
-  images: z.array(z.string().url()).max(6).optional(),
+  imageUrl: httpUrl.optional(),
+  images: z.array(httpUrl).max(6).optional(),
   matchId: z.string().optional(),
   deckId: z.string().optional(),
   groupId: z.string().optional(),

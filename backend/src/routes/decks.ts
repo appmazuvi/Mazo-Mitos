@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../prisma.js";
-import { requireAuth, type AuthedRequest } from "../auth.js";
+import { requireAuth, optionalAuth, type AuthedRequest } from "../auth.js";
 import { evaluateAchievements } from "../achievements.js";
 
 export const decksRouter = Router();
@@ -23,12 +23,15 @@ decksRouter.get("/", requireAuth, async (req: AuthedRequest, res) => {
   res.json(decks);
 });
 
-decksRouter.get("/:id", async (req, res) => {
+decksRouter.get("/:id", optionalAuth, async (req: AuthedRequest, res) => {
   const deck = await prisma.deck.findUnique({
     where: { id: req.params.id },
     include: { cards: { include: { card: true } }, owner: { select: { username: true, displayName: true } } },
   });
   if (!deck) return res.status(404).json({ error: "Mazo no encontrado" });
+  if (!deck.isPublic && deck.ownerId !== req.user?.userId) {
+    return res.status(404).json({ error: "Mazo no encontrado" });
+  }
   res.json(deck);
 });
 

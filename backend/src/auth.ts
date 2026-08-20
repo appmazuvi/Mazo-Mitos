@@ -1,7 +1,10 @@
 import jwt from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
 
-const JWT_SECRET = process.env.JWT_SECRET ?? "change-me-in-production";
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET no está configurado. Definilo como variable de entorno antes de arrancar el servidor.");
+}
+const JWT_SECRET: string = process.env.JWT_SECRET;
 
 export interface AuthPayload {
   userId: string;

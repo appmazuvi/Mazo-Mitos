@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../prisma.js";
 import { requireAuth, type AuthedRequest } from "../auth.js";
+import { httpUrl } from "../validators.js";
 
 export const storiesRouter = Router();
 
@@ -25,7 +26,7 @@ storiesRouter.get("/", requireAuth, async (req: AuthedRequest, res) => {
   res.json([...byAuthor.values()].map((list) => ({ author: list[0].author, authorId: list[0].authorId, stories: list })));
 });
 
-const createStorySchema = z.object({ imageUrl: z.string().url(), caption: z.string().max(200).optional() });
+const createStorySchema = z.object({ imageUrl: httpUrl, caption: z.string().max(200).optional() });
 
 storiesRouter.post("/", requireAuth, async (req: AuthedRequest, res) => {
   const parsed = createStorySchema.safeParse(req.body);

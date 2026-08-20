@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../prisma.js";
 import { requireAuth, requireAdmin, type AuthedRequest } from "../auth.js";
+import { httpUrl } from "../validators.js";
 
 export const adminRouter = Router();
 adminRouter.use(requireAuth, requireAdmin);
@@ -54,7 +55,7 @@ const cardSchema = z.object({
   rarity: z.enum(["COMUN", "RARA", "EPICA", "LEGENDARIA"]),
   effectKey: z.string().max(40).nullable().optional(),
   description: z.string().min(1).max(300),
-  imageUrl: z.string().url().nullable().optional(),
+  imageUrl: httpUrl.nullable().optional(),
 });
 
 adminRouter.post("/cards", async (req, res) => {

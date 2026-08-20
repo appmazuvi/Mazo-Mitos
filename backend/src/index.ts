@@ -1,6 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import path from "path";
 import fs from "fs";
 import { createServer } from "http";
@@ -29,11 +31,30 @@ const corsOrigin = process.env.CORS_ORIGIN ?? "http://localhost:5173";
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
+app.use(
+  helmet({
+    // API pura sin HTML propio: una CSP por defecto no protege nada acá y
+    // puede interferir con clientes; el resto de las cabeceras (nosniff,
+    // frameguard, HSTS, etc.) sí valen la pena.
+    contentSecurityPolicy: false,
+    // Las imágenes de /uploads las consume el frontend desde otro subdominio.
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
 app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 app.use("/uploads", express.static(uploadDir));
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
+app.use(
+  "/api",
+  rateLimit({
+    windowMs: 5 * 60 * 1000,
+    limit: 600,
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
+);
 app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/cards", cardsRouter);

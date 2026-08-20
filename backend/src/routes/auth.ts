@@ -1,10 +1,20 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
+import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { prisma } from "../prisma.js";
 import { signToken } from "../auth.js";
 
 export const authRouter = Router();
+
+// Frena fuerza bruta de credenciales y spam de registro por IP.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Demasiados intentos, esperá unos minutos e intentá de nuevo" },
+});
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -17,7 +27,7 @@ const registerSchema = z.object({
   displayName: z.string().min(1).max(40).optional(),
 });
 
-authRouter.post("/register", async (req, res) => {
+authRouter.post("/register", authLimiter, async (req, res) => {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues[0].message });
@@ -48,7 +58,7 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-authRouter.post("/login", async (req, res) => {
+authRouter.post("/login", authLimiter, async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Datos inválidos" });

@@ -56,10 +56,10 @@ function broadcastState(match: ActiveMatch) {
   }
 }
 
-async function finishMatch(matchId: string, match: ActiveMatch) {
+async function finishMatch(matchId: string, match: ActiveMatch, status: "FINISHED" | "ABANDONED" = "FINISHED") {
   await prisma.match.update({
     where: { id: matchId },
-    data: { status: "FINISHED", winnerId: match.state.winnerId, finishedAt: new Date() },
+    data: { status, winnerId: match.state.winnerId, finishedAt: new Date() },
   });
 
   const userIds = Object.keys(match.sockets);
@@ -150,12 +150,12 @@ export function registerGameSocket(io: Server) {
       const remainingUserId = Object.keys(match.sockets).find((id) => match.sockets[id].id !== socket.id);
       match.state.phase = "FINISHED";
       match.state.winnerId = remainingUserId ?? null;
-      await prisma.match.update({
-        where: { id: matchId },
-        data: { status: "ABANDONED", winnerId: match.state.winnerId, finishedAt: new Date() },
-      });
       if (remainingUserId) match.sockets[remainingUserId].emit("game:state", serializeStateFor(match.state, remainingUserId));
-      activeMatches.delete(matchId);
+      // Reutiliza la misma ruta que una partida terminada normalmente para
+      // que desconectarse (para esquivar una derrota) siga actualizando el
+      // rating Elo y las notificaciones, en vez de dejar la partida "flotando"
+      // sin consecuencias competitivas.
+      await finishMatch(matchId, match, "ABANDONED");
     });
   });
 }
