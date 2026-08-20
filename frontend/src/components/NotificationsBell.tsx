@@ -26,7 +26,7 @@ export function NotificationsBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto card-frame z-40 p-2" style={{ ["--frame-color" as string]: "#6a5a8a" }}>
+          <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto card-frame z-40 p-2" style={{ ["--frame-color" as string]: "#a86a1c" }}>
             <p className="font-display text-sm font-semibold px-2 py-2 text-white/80">Notificaciones</p>
             {notifications.length === 0 ? (
               <p className="text-xs text-white/40 px-2 py-4 text-center">Sin notificaciones todavía.</p>

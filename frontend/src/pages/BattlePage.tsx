@@ -258,7 +258,7 @@ export function BattlePage() {
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 transition={{ type: "spring", stiffness: 260, damping: 20 }}
                 className="card-frame p-10 text-center relative overflow-hidden"
-                style={{ ["--frame-color" as string]: winnerLabel ? "#e8b64c" : "#6a5a8a" }}
+                style={{ ["--frame-color" as string]: winnerLabel ? "#e8b64c" : "#a86a1c" }}
               >
                 {winnerLabel && (
                   <div

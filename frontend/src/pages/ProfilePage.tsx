@@ -59,7 +59,7 @@ export function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4 pb-24 md:pb-8">
-      <div className="card-frame overflow-hidden" style={{ ["--frame-color" as string]: profile.role === "ADMIN" ? "#e8b64c" : "#6a5a8a" }}>
+      <div className="card-frame overflow-hidden" style={{ ["--frame-color" as string]: profile.role === "ADMIN" ? "#e8b64c" : "#a86a1c" }}>
         <div className="relative h-32 bg-gradient-to-br from-arcane-700 via-arcane-900 to-black">
           {profile.coverUrl && <img src={profile.coverUrl} className="absolute inset-0 w-full h-full object-cover" />}
           {isMe && <ImageUploadButton onUploaded={handleCover} className="absolute top-2 right-2 bg-black/50 p-2 rounded-lg" />}

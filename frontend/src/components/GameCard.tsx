@@ -37,7 +37,7 @@ export function GameCard({ card, size = "md", disabled, selected, targetable, at
         ${selected ? "ring-2 ring-arcane-400 -translate-y-2" : ""}
         ${targetable ? "ring-2 ring-rose-400 animate-pulse" : ""}
         ${disabled ? "opacity-40 grayscale" : onClick ? "hover:-translate-y-1 cursor-pointer" : "cursor-default"}`}
-      style={{ ["--frame-color" as string]: card.effectKey === "TAUNT" ? "#e8b64c" : "#6a5a8a" }}
+      style={{ ["--frame-color" as string]: card.effectKey === "TAUNT" ? "#e8b64c" : "#a86a1c" }}
     >
       {card.imageUrl && (
         <div className="absolute inset-0">
