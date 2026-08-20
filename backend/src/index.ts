@@ -15,9 +15,12 @@ import { uploadsRouter } from "./routes/uploads.js";
 import { adminRouter } from "./routes/admin.js";
 import { searchRouter } from "./routes/search.js";
 import { messagesRouter } from "./routes/messages.js";
+import { groupsRouter } from "./routes/groups.js";
+import { storiesRouter } from "./routes/stories.js";
 import { registerGameSocket } from "./game/socket.js";
 import { registerRealtime } from "./realtime.js";
 import { verifyToken } from "./auth.js";
+import { ensureAchievementsSeeded } from "./achievements.js";
 
 const app = express();
 const corsOrigin = process.env.CORS_ORIGIN ?? "http://localhost:5173";
@@ -40,6 +43,8 @@ app.use("/api/uploads", uploadsRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/search", searchRouter);
 app.use("/api/messages", messagesRouter);
+app.use("/api/groups", groupsRouter);
+app.use("/api/stories", storiesRouter);
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, { cors: { origin: corsOrigin, credentials: true } });
@@ -60,6 +65,8 @@ io.use((socket, next) => {
 
 registerRealtime(io);
 registerGameSocket(io);
+
+ensureAchievementsSeeded().catch((err) => console.error("No se pudieron sembrar los logros:", err));
 
 const port = Number(process.env.PORT ?? 4000);
 httpServer.listen(port, () => {

@@ -16,6 +16,7 @@ export function DeckEditorPage() {
   const [allCards, setAllCards] = useState<Card[]>([]);
   const [name, setName] = useState("Mazo sin nombre");
   const [isPublic, setIsPublic] = useState(false);
+  const [featured, setFeatured] = useState(false);
   const [selection, setSelection] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -26,6 +27,7 @@ export function DeckEditorPage() {
       api.get<Deck>(`/api/decks/${id}`).then((deck) => {
         setName(deck.name);
         setIsPublic(deck.isPublic);
+        setFeatured(deck.featured ?? false);
         const sel: Record<string, number> = {};
         for (const dc of deck.cards) sel[dc.cardId] = dc.quantity;
         setSelection(sel);
@@ -65,6 +67,7 @@ export function DeckEditorPage() {
     const payload = {
       name,
       isPublic,
+      featured,
       cards: Object.entries(selection).map(([cardId, quantity]) => ({ cardId, quantity })),
     };
     try {
@@ -124,10 +127,16 @@ export function DeckEditorPage() {
           </span>
         </div>
 
-        <label className="flex items-center gap-2 text-xs text-white/50 mt-2 mb-4">
-          <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} />
-          Hacer público este mazo
-        </label>
+        <div className="flex flex-col gap-2 mt-2 mb-4">
+          <label className="flex items-center gap-2 text-xs text-white/50">
+            <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} />
+            Hacer público este mazo
+          </label>
+          <label className="flex items-center gap-2 text-xs text-white/50">
+            <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} disabled={!isPublic} />
+            Destacar en mi perfil {!isPublic && "(requiere que sea público)"}
+          </label>
+        </div>
 
         <div className="flex flex-col gap-1 max-h-96 overflow-y-auto pr-1">
           {deckList.length === 0 && <p className="text-xs text-white/40">Agregá cartas desde la colección.</p>}

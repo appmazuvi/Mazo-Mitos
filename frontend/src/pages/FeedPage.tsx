@@ -3,13 +3,14 @@ import { api } from "../lib/api";
 import { useAuth } from "../lib/AuthContext";
 import { PostCard } from "../components/PostCard";
 import { ImageUploadButton } from "../components/ImageUploadButton";
+import { StoriesBar } from "../components/StoriesBar";
 import { Icon } from "../components/Icon";
 import type { Post } from "../types";
 
 export function FeedPage({ mode = "feed" }: { mode?: "feed" | "explore" }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [content, setContent] = useState("");
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
@@ -28,15 +29,17 @@ export function FeedPage({ mode = "feed" }: { mode?: "feed" | "explore" }) {
   async function handlePost(e: React.FormEvent) {
     e.preventDefault();
     if (!content.trim()) return;
-    const post = await api.post<Post>("/api/posts", { content, imageUrl: imageUrl ?? undefined });
+    const post = await api.post<Post>("/api/posts", { content, images });
     setPosts((p) => [post, ...p]);
     setContent("");
-    setImageUrl(null);
+    setImages([]);
   }
 
   return (
     <div className="max-w-xl mx-auto py-8 px-4 pb-24 md:pb-8">
       <h1 className="text-xl font-bold font-display mb-6">{mode === "feed" ? "Tu feed" : "Explorar"}</h1>
+
+      {mode === "feed" && <StoriesBar />}
 
       {mode === "feed" && (
         <form onSubmit={handlePost} className="card-surface p-4 mb-6">
@@ -52,16 +55,24 @@ export function FeedPage({ mode = "feed" }: { mode?: "feed" | "explore" }) {
               onChange={(e) => setContent(e.target.value)}
             />
           </div>
-          {imageUrl && (
-            <div className="relative mt-3 ml-12">
-              <img src={imageUrl} className="rounded-lg max-h-48 object-cover" />
-              <button type="button" onClick={() => setImageUrl(null)} className="absolute top-1.5 right-1.5 bg-black/60 rounded-full p-1">
-                <Icon name="x" size={14} />
-              </button>
+          {images.length > 0 && (
+            <div className="flex gap-2 mt-3 ml-12 flex-wrap">
+              {images.map((url, i) => (
+                <div key={i} className="relative">
+                  <img src={url} className="rounded-lg h-24 w-24 object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setImages((imgs) => imgs.filter((_, idx) => idx !== i))}
+                    className="absolute top-1 right-1 bg-black/60 rounded-full p-1"
+                  >
+                    <Icon name="x" size={12} />
+                  </button>
+                </div>
+              ))}
             </div>
           )}
           <div className="flex justify-between items-center mt-3">
-            <ImageUploadButton onUploaded={setImageUrl} />
+            <ImageUploadButton onUploaded={(url) => setImages((imgs) => (imgs.length < 6 ? [...imgs, url] : imgs))} />
             <button type="submit" className="btn-primary px-4 py-2 text-sm" disabled={!content.trim()}>
               Publicar
             </button>

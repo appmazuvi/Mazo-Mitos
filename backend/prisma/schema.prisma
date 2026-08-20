@@ -38,16 +38,20 @@ model User {
   passwordHash String
   displayName  String?
   avatarUrl    String?
+  coverUrl     String?
   bio          String?
   role         Role     @default(USER)
   banned       Boolean  @default(false)
   banReason    String?
+  rating       Int      @default(1000)
+  peakRating   Int      @default(1000)
   createdAt    DateTime @default(now())
 
   decks         Deck[]
   posts         Post[]
   comments      Comment[]
   likes         Like[]
+  stories       Story[]
 
   following     Follow[] @relation("Following")
   followers     Follow[] @relation("Followers")
@@ -61,6 +65,10 @@ model User {
   conversationsA Conversation[] @relation("ParticipantA")
   conversationsB Conversation[] @relation("ParticipantB")
   messagesSent   Message[]      @relation("MessageSender")
+
+  achievements   UserAchievement[]
+  groupsOwned    Group[]           @relation("GroupOwner")
+  groupMemberships GroupMember[]
 }
 
 model Follow {
@@ -95,6 +103,7 @@ model Deck {
   owner     User       @relation(fields: [ownerId], references: [id])
   ownerId   String
   isPublic  Boolean    @default(false)
+  featured  Boolean    @default(false)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
@@ -131,8 +140,11 @@ model Post {
   authorId  String
   content   String
   imageUrl  String?
+  images    String[]  @default([])
   matchId   String?
   deckId    String?
+  group     Group?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId   String?
   createdAt DateTime  @default(now())
 
   comments  Comment[]
@@ -140,24 +152,100 @@ model Post {
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  id        String    @id @default(cuid())
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId    String
-  author    User     @relation(fields: [authorId], references: [id])
+  author    User      @relation(fields: [authorId], references: [id])
   authorId  String
   content   String
-  createdAt DateTime @default(now())
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId  String?
+  replies   Comment[] @relation("CommentReplies")
+  createdAt DateTime  @default(now())
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  FIRE
+  LAUGH
+  WOW
 }
 
 model Like {
-  id        String   @id @default(cuid())
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  id        String       @id @default(cuid())
+  post      Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User         @relation(fields: [userId], references: [id])
   userId    String
-  createdAt DateTime @default(now())
+  type      ReactionType @default(LIKE)
+  createdAt DateTime     @default(now())
 
   @@unique([postId, userId])
+}
+
+model Story {
+  id        String   @id @default(cuid())
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+  imageUrl  String
+  caption   String?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+enum GroupRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  avatarUrl   String?
+  coverUrl    String?
+  owner       User     @relation("GroupOwner", fields: [ownerId], references: [id])
+  ownerId     String
+  createdAt   DateTime @default(now())
+
+  members GroupMember[]
+  posts   Post[]
+}
+
+model GroupMember {
+  id       String    @id @default(cuid())
+  group    Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId  String
+  user     User      @relation(fields: [userId], references: [id])
+  userId   String
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime  @default(now())
+
+  @@unique([groupId, userId])
+}
+
+model Achievement {
+  id          String @id @default(cuid())
+  key         String @unique
+  name        String
+  description String
+  icon        String
+
+  users UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  user          User        @relation(fields: [userId], references: [id])
+  userId        String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+
+  @@unique([userId, achievementId])
 }
 
 enum NotificationType {
@@ -167,6 +255,7 @@ enum NotificationType {
   MATCH_INVITE
   MATCH_RESULT
   MESSAGE
+  ACHIEVEMENT
 }
 
 model Notification {

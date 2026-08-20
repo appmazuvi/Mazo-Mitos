@@ -12,6 +12,7 @@ const navItems = [
   { to: "/mazos", label: "Mazos", icon: "deck" as const },
   { to: "/batalla", label: "Batalla", icon: "swords" as const },
   { to: "/mensajes", label: "Mensajes", icon: "message" as const },
+  { to: "/grupos", label: "Grupos", icon: "users" as const },
 ];
 
 const mobileItems = [navItems[0], navItems[2], navItems[5], navItems[6], navItems[3]];

@@ -87,7 +87,45 @@ const CARD_ART: Record<string, { faction: keyof typeof FACTIONS; glyph: keyof ty
   "Aniquilación": { faction: "void", glyph: "star" },
   "Tormenta de Meteoros": { faction: "void", glyph: "meteor" },
   "Nyxandra, Devoradora de Mundos": { faction: "void", glyph: "skull" },
+
+  "Trol de Forja": { faction: "ignis", glyph: "claw" },
+  "Heraldo Ardiente": { faction: "ignis", glyph: "shield" },
+  "Explosión Menor": { faction: "ignis", glyph: "flame" },
+  "Behemot de Cenizas": { faction: "ignis", glyph: "claw" },
+  "Vulkar, el Incendiario": { faction: "ignis", glyph: "flame" },
+
+  "Anguila Eléctrica": { faction: "abisal", glyph: "lightning" },
+  "Chamán de Coral": { faction: "abisal", glyph: "droplet" },
+  "Corriente Curativa": { faction: "abisal", glyph: "droplet" },
+  "Guardián Abisal": { faction: "abisal", glyph: "shield" },
+  "Thalassa, Madre de las Mareas": { faction: "abisal", glyph: "wave" },
+
+  "Erizo de Piedra": { faction: "terra", glyph: "thorn" },
+  "Cazador del Bosque": { faction: "terra", glyph: "claw" },
+  "Enredadera Voraz": { faction: "terra", glyph: "thorn" },
+  "Ancestro de Roble": { faction: "terra", glyph: "tree" },
+  "Yggros, el Inquebrantable": { faction: "terra", glyph: "mountain" },
+
+  "Colibrí Veloz": { faction: "cefiro", glyph: "wing" },
+  "Vigía de las Alturas": { faction: "cefiro", glyph: "feather" },
+  "Corte de Viento": { faction: "cefiro", glyph: "windspiral" },
+  "Águila Tormentosa": { faction: "cefiro", glyph: "wing" },
+  "Zephyra, Alma del Cielo": { faction: "cefiro", glyph: "wing" },
+
+  "Chispa Prohibida": { faction: "void", glyph: "eye" },
+  "Vidente del Abismo": { faction: "void", glyph: "eye" },
+  "Ritual de Sangre": { faction: "void", glyph: "skull" },
+  "Vorágine Final": { faction: "void", glyph: "meteor" },
+  "Aprendiz de Sombra": { faction: "void", glyph: "eye" },
 };
+
+export const FACTION_CARD_NAMES: Record<string, string[]> = Object.entries(CARD_ART).reduce(
+  (acc, [name, { faction }]) => {
+    (acc[faction] ??= []).push(name);
+    return acc;
+  },
+  {} as Record<string, string[]>
+);
 
 export function generateCardArt(cardName: string, rarity: string): string {
   const entry = CARD_ART[cardName] ?? { faction: "void" as const, glyph: "star" as const };

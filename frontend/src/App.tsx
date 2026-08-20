@@ -10,6 +10,8 @@ import { BattlePage } from "./pages/BattlePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { SearchPage } from "./pages/SearchPage";
 import { MessagesPage } from "./pages/MessagesPage";
+import { GroupsPage } from "./pages/GroupsPage";
+import { GroupDetailPage } from "./pages/GroupDetailPage";
 import { AdminLayout } from "./admin/AdminLayout";
 import { DashboardPage } from "./admin/pages/DashboardPage";
 import { CardsAdminPage } from "./admin/pages/CardsAdminPage";
@@ -50,6 +52,8 @@ export default function App() {
         <Route path="/batalla" element={<BattlePage />} />
         <Route path="/mensajes" element={<MessagesPage />} />
         <Route path="/mensajes/:username" element={<MessagesPage />} />
+        <Route path="/grupos" element={<GroupsPage />} />
+        <Route path="/grupos/:slug" element={<GroupDetailPage />} />
         <Route path="/perfil/:username" element={<ProfilePage />} />
       </Route>
       <Route

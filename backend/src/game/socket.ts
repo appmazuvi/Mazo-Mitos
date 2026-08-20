@@ -2,7 +2,15 @@ import type { Server, Socket } from "socket.io";
 import { prisma } from "../prisma.js";
 import { applyAction, createGame, serializeStateFor } from "./engine.js";
 import { pushToUser } from "../realtime.js";
+import { evaluateAchievements } from "../achievements.js";
 import type { CardTemplate, GameAction, GameState } from "./types.js";
+
+const K_FACTOR = 32;
+
+function eloDelta(ratingA: number, ratingB: number, scoreA: 0 | 1) {
+  const expectedA = 1 / (1 + 10 ** ((ratingB - ratingA) / 400));
+  return Math.round(K_FACTOR * (scoreA - expectedA));
+}
 
 interface QueueEntry {
   socket: Socket;
@@ -53,10 +61,25 @@ async function finishMatch(matchId: string, match: ActiveMatch) {
     where: { id: matchId },
     data: { status: "FINISHED", winnerId: match.state.winnerId, finishedAt: new Date() },
   });
-  for (const userId of Object.keys(match.sockets)) {
+
+  const userIds = Object.keys(match.sockets);
+  const [userA, userB] = await Promise.all(userIds.map((id) => prisma.user.findUnique({ where: { id }, select: { id: true, rating: true, peakRating: true } })));
+
+  if (userA && userB) {
+    const aWon = userA.id === match.state.winnerId ? 1 : 0;
+    const deltaA = eloDelta(userA.rating, userB.rating, aWon as 0 | 1);
+    const deltaB = eloDelta(userB.rating, userA.rating, (1 - aWon) as 0 | 1);
+    const newA = Math.max(0, userA.rating + deltaA);
+    const newB = Math.max(0, userB.rating + deltaB);
+    await prisma.user.update({ where: { id: userA.id }, data: { rating: newA, peakRating: Math.max(userA.peakRating, newA) } });
+    await prisma.user.update({ where: { id: userB.id }, data: { rating: newB, peakRating: Math.max(userB.peakRating, newB) } });
+  }
+
+  for (const userId of userIds) {
     const message = userId === match.state.winnerId ? "¡Ganaste tu partida!" : "Perdiste tu partida.";
     await prisma.notification.create({ data: { targetId: userId, type: "MATCH_RESULT", message } });
     pushToUser(userId, "notification:new", { type: "MATCH_RESULT", message });
+    evaluateAchievements(userId).catch(() => {});
   }
   activeMatches.delete(matchId);
   for (const socket of Object.values(match.sockets)) socketToMatch.delete(socket.id);
