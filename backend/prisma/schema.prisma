@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CardType {
+  CREATURE
+  SPELL
+}
+
+enum Rarity {
+  COMUN
+  RARA
+  EPICA
+  LEGENDARIA
+}
+
+enum MatchStatus {
+  WAITING
+  IN_PROGRESS
+  FINISHED
+  ABANDONED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  passwordHash String
+  displayName  String?
+  avatarUrl    String?
+  bio          String?
+  createdAt    DateTime @default(now())
+
+  decks         Deck[]
+  posts         Post[]
+  comments      Comment[]
+  likes         Like[]
+
+  following     Follow[] @relation("Following")
+  followers     Follow[] @relation("Followers")
+
+  matchesAsP1   Match[]  @relation("Player1")
+  matchesAsP2   Match[]  @relation("Player2")
+  matchesWon    Match[]  @relation("Winner")
+
+  notifications Notification[] @relation("NotificationTarget")
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  follower    User     @relation("Following", fields: [followerId], references: [id])
+  followerId  String
+  following   User     @relation("Followers", fields: [followingId], references: [id])
+  followingId String
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+}
+
+model Card {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  cost        Int
+  type        CardType
+  attack      Int?
+  health      Int?
+  rarity      Rarity
+  effectKey   String?
+  description String
+  imageUrl    String?
+
+  deckCards   DeckCard[]
+}
+
+model Deck {
+  id        String     @id @default(cuid())
+  name      String
+  owner     User       @relation(fields: [ownerId], references: [id])
+  ownerId   String
+  isPublic  Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  cards     DeckCard[]
+}
+
+model DeckCard {
+  id       String @id @default(cuid())
+  deck     Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  deckId   String
+  card     Card   @relation(fields: [cardId], references: [id])
+  cardId   String
+  quantity Int    @default(1)
+
+  @@unique([deckId, cardId])
+}
+
+model Match {
+  id         String      @id @default(cuid())
+  player1    User        @relation("Player1", fields: [player1Id], references: [id])
+  player1Id  String
+  player2    User        @relation("Player2", fields: [player2Id], references: [id])
+  player2Id  String
+  winner     User?       @relation("Winner", fields: [winnerId], references: [id])
+  winnerId   String?
+  status     MatchStatus @default(WAITING)
+  createdAt  DateTime    @default(now())
+  finishedAt DateTime?
+}
+
+model Post {
+  id        String    @id @default(cuid())
+  author    User      @relation(fields: [authorId], references: [id])
+  authorId  String
+  content   String
+  imageUrl  String?
+  matchId   String?
+  deckId    String?
+  createdAt DateTime  @default(now())
+
+  comments  Comment[]
+  likes     Like[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+}
+
+enum NotificationType {
+  FOLLOW
+  LIKE
+  COMMENT
+  MATCH_INVITE
+  MATCH_RESULT
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  target    User             @relation("NotificationTarget", fields: [targetId], references: [id])
+  targetId  String
+  type      NotificationType
+  message   String
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+}
