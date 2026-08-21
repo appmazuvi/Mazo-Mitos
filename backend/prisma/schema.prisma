@@ -94,6 +94,7 @@ model Card {
   description String
   imageUrl    String?
   set         String?
+  code        String?
 
   deckCards   DeckCard[]
 

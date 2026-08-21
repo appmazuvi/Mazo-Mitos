@@ -58,6 +58,7 @@ export interface Card {
   description: string;
   imageUrl?: string | null;
   set?: string | null;
+  code?: string | null;
 }
 
 export interface DeckCard {

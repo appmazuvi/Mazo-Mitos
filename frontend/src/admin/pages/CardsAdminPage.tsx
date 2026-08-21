@@ -14,14 +14,45 @@ const EMPTY: Omit<Card, "id"> = {
   description: "",
   imageUrl: null,
   set: null,
+  code: null,
 };
 
 const EFFECTS = ["", "TAUNT", "CHARGE", "LIFESTEAL", "DAMAGE_2", "DAMAGE_3", "DAMAGE_4", "DAMAGE_6", "AOE_DAMAGE_2", "HEAL_4", "HEAL_8", "DRAW_2", "BUFF_ATTACK_2", "DESTROY_TARGET"];
 
-const CSV_TEMPLATE = `name,cost,type,attack,health,rarity,effectKey,description,set,imageUrl
-Recluta de Ignis,1,CREATURE,1,2,COMUN,,Un joven soldado de las llamas.,Batalla 1,
-Bola de Fuego,4,SPELL,,,RARA,DAMAGE_4,Inflige 4 de daño a un objetivo.,Batalla 1,
+const CSV_TEMPLATE = `name,cost,type,attack,health,rarity,effectKey,description,set,code,imageUrl
+Recluta de Ignis,1,CREATURE,1,2,COMUN,,Un joven soldado de las llamas.,Batalla 2,B2-001,
+Bola de Fuego,4,SPELL,,,RARA,DAMAGE_4,Inflige 4 de daño a un objetivo.,Batalla 2,B2-002,
 `;
+
+const JSON_TEMPLATE = JSON.stringify(
+  [
+    {
+      name: "Recluta de Ignis",
+      cost: 1,
+      type: "CREATURE",
+      attack: 1,
+      health: 2,
+      rarity: "COMUN",
+      effectKey: null,
+      description: "Un joven soldado de las llamas.",
+      set: "Batalla 2",
+      code: "B2-001",
+      imageUrl: null,
+    },
+    {
+      name: "Bola de Fuego",
+      cost: 4,
+      type: "SPELL",
+      rarity: "RARA",
+      effectKey: "DAMAGE_4",
+      description: "Inflige 4 de daño a un objetivo.",
+      set: "Batalla 2",
+      code: "B2-002",
+    },
+  ],
+  null,
+  2
+);
 
 interface BulkResult {
   created: number;
@@ -51,11 +82,13 @@ export function CardsAdminPage() {
   const [uploading, setUploading] = useState(false);
   const [bulkResult, setBulkResult] = useState<BulkResult | null>(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
+  const [batchSet, setBatchSet] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imgUploading, setImgUploading] = useState(false);
   const [imgResult, setImgResult] = useState<ImageBulkResult | null>(null);
   const imgInputRef = useRef<HTMLInputElement>(null);
   const [artUploading, setArtUploading] = useState(false);
+  const [renaming, setRenaming] = useState(false);
 
   function load() {
     api.get<Card[]>("/api/cards").then(setCards);
@@ -79,6 +112,7 @@ export function CardsAdminPage() {
       health: editing.type === "CREATURE" ? Number(editing.health ?? 1) : null,
       effectKey: editing.effectKey || null,
       set: editing.set?.trim() || null,
+      code: editing.code?.trim() || null,
     };
     try {
       if ("id" in editing && editing.id) {
@@ -99,12 +133,14 @@ export function CardsAdminPage() {
     load();
   }
 
-  function downloadTemplate() {
-    const blob = new Blob([CSV_TEMPLATE], { type: "text/csv;charset=utf-8" });
+  function downloadTemplate(kind: "csv" | "json") {
+    const content = kind === "csv" ? CSV_TEMPLATE : JSON_TEMPLATE;
+    const type = kind === "csv" ? "text/csv;charset=utf-8" : "application/json;charset=utf-8";
+    const blob = new Blob([content], { type });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "plantilla-cartas.csv";
+    a.download = kind === "csv" ? "plantilla-cartas.csv" : "plantilla-cartas.json";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -117,6 +153,7 @@ export function CardsAdminPage() {
       const token = localStorage.getItem("cartaverso_token");
       const form = new FormData();
       form.append("file", file);
+      if (batchSet.trim()) form.append("defaultSet", batchSet.trim());
       const res = await fetch(`${API_URL}/api/admin/cards/bulk`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -131,6 +168,21 @@ export function CardsAdminPage() {
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function renameSet(oldName: string) {
+    const newName = prompt(`Nuevo nombre para la colección "${oldName}":`, oldName);
+    if (!newName || !newName.trim() || newName.trim() === oldName) return;
+    setRenaming(true);
+    try {
+      const toRename = cards.filter((c) => c.set === oldName);
+      for (const c of toRename) {
+        await api.put(`/api/admin/cards/${c.id}`, { set: newName.trim() });
+      }
+      load();
+    } finally {
+      setRenaming(false);
     }
   }
 
@@ -191,22 +243,33 @@ export function CardsAdminPage() {
         <div className="card-surface p-4 mb-5">
           <p className="text-sm font-semibold mb-1">Carga masiva por archivo</p>
           <p className="text-xs text-white/40 mb-3">
-            Subí un CSV con columnas name, cost, type, attack, health, rarity, effectKey, description, set, imageUrl. Las cartas se
-            agrupan por el nombre de set (ej. "Batalla 1", "Batalla 2"); si el nombre de una carta ya existe, se actualiza en vez de
-            duplicarse.
+            Subí un CSV o JSON con las columnas/campos name, cost, type, attack, health, rarity, effectKey, description, set, code,
+            imageUrl (podés usar "edition" en vez de "set"). Si el nombre de una carta ya existe, se actualiza en vez de duplicarse.
           </p>
+          <Field label="Nombre de colección para este lote (opcional)">
+            <input
+              className="input-field w-full text-sm mb-3"
+              placeholder='Ej. "Colección de cartas 2" — se usa si el archivo no trae set/edition'
+              value={batchSet}
+              onChange={(e) => setBatchSet(e.target.value)}
+            />
+          </Field>
           <div className="flex flex-wrap items-center gap-2">
-            <button onClick={downloadTemplate} className="btn-ghost px-3 py-2 text-xs flex items-center gap-1.5">
+            <button onClick={() => downloadTemplate("csv")} className="btn-ghost px-3 py-2 text-xs flex items-center gap-1.5">
               <Icon name="image" size={14} />
-              Descargar plantilla
+              Plantilla CSV
+            </button>
+            <button onClick={() => downloadTemplate("json")} className="btn-ghost px-3 py-2 text-xs flex items-center gap-1.5">
+              <Icon name="image" size={14} />
+              Plantilla JSON
             </button>
             <label className="btn-primary px-3 py-2 text-xs flex items-center gap-1.5 cursor-pointer">
               <Icon name={uploading ? "loader" : "send"} size={14} className={uploading ? "animate-spin" : ""} />
-              {uploading ? "Subiendo..." : "Subir CSV"}
+              {uploading ? "Subiendo..." : "Subir archivo"}
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".csv,text/csv"
+                accept=".csv,text/csv,.json,application/json"
                 className="hidden"
                 disabled={uploading}
                 onChange={(e) => {
@@ -290,15 +353,25 @@ export function CardsAdminPage() {
 
         {sets.length > 0 && (
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-xs text-white/40">Set:</span>
+            <span className="text-xs text-white/40">Colección:</span>
             <select className="input-field text-xs py-1.5" value={setFilter} onChange={(e) => setSetFilter(e.target.value)}>
-              <option value="">Todos</option>
+              <option value="">Todas</option>
               {sets.map((s) => (
                 <option key={s} value={s}>
                   {s}
                 </option>
               ))}
             </select>
+            {setFilter && (
+              <button
+                onClick={() => renameSet(setFilter)}
+                disabled={renaming}
+                className="text-xs text-white/40 hover:text-white/70 flex items-center gap-1"
+              >
+                <Icon name="edit" size={12} />
+                Renombrar
+              </button>
+            )}
           </div>
         )}
 
@@ -307,7 +380,7 @@ export function CardsAdminPage() {
             <thead>
               <tr className="text-left text-[11px] uppercase tracking-wide text-white/40 border-b border-white/5">
                 <th className="p-3">Nombre</th>
-                <th className="p-3">Set</th>
+                <th className="p-3">Colección</th>
                 <th className="p-3">Costo</th>
                 <th className="p-3">Tipo</th>
                 <th className="p-3">Rareza</th>
@@ -344,20 +417,30 @@ export function CardsAdminPage() {
             <Field label="Nombre">
               <input className="input-field w-full" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
             </Field>
-            <Field label="Set">
-              <input
-                className="input-field w-full"
-                list="set-options"
-                placeholder="Ej. Batalla 1"
-                value={editing.set ?? ""}
-                onChange={(e) => setEditing({ ...editing, set: e.target.value })}
-              />
-              <datalist id="set-options">
-                {sets.map((s) => (
-                  <option key={s} value={s} />
-                ))}
-              </datalist>
-            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Colección">
+                <input
+                  className="input-field w-full"
+                  list="set-options"
+                  placeholder="Ej. Batalla 2"
+                  value={editing.set ?? ""}
+                  onChange={(e) => setEditing({ ...editing, set: e.target.value })}
+                />
+                <datalist id="set-options">
+                  {sets.map((s) => (
+                    <option key={s} value={s} />
+                  ))}
+                </datalist>
+              </Field>
+              <Field label="Código (opcional)">
+                <input
+                  className="input-field w-full"
+                  placeholder="Ej. B2-001"
+                  value={editing.code ?? ""}
+                  onChange={(e) => setEditing({ ...editing, code: e.target.value })}
+                />
+              </Field>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Costo">
                 <input type="number" className="input-field w-full" value={editing.cost} onChange={(e) => setEditing({ ...editing, cost: Number(e.target.value) })} />

@@ -59,6 +59,7 @@ const cardSchema = z.object({
   description: z.string().min(1).max(300),
   imageUrl: httpUrl.nullable().optional(),
   set: z.string().max(60).nullable().optional(),
+  code: z.string().max(30).nullable().optional(),
 });
 
 adminRouter.post("/cards", async (req, res) => {
@@ -81,7 +82,7 @@ adminRouter.delete("/cards/:id", async (req, res) => {
   res.status(204).end();
 });
 
-// ---------- Carga masiva de cartas por CSV ----------
+// ---------- Carga masiva de cartas por CSV o JSON ----------
 const VALID_TYPES = ["CREATURE", "SPELL"] as const;
 const VALID_RARITIES = ["COMUN", "RARA", "EPICA", "LEGENDARIA"] as const;
 
@@ -99,6 +100,7 @@ interface BulkRowOk {
     effectKey: string | null;
     description: string;
     set: string | null;
+    code: string | null;
     imageUrl: string | null;
   };
 }
@@ -109,49 +111,62 @@ interface BulkRowError {
   error: string;
 }
 
-function parseCardRow(raw: Record<string, string>, row: number): BulkRowOk | BulkRowError {
-  const name = (raw.name ?? "").trim();
+function toStr(v: unknown): string {
+  if (v === undefined || v === null) return "";
+  return String(v).trim();
+}
+
+// Acepta tanto una fila de CSV (siempre strings) como un objeto de un array
+// JSON (valores ya tipados) — se normalizan a texto antes de validar.
+function parseCardRow(raw: Record<string, unknown>, row: number, defaultSet?: string): BulkRowOk | BulkRowError {
+  const name = toStr(raw.name);
   if (!name) return { ok: false, row, error: "Falta el nombre" };
   if (name.length > 60) return { ok: false, row, name, error: "Nombre demasiado largo (máx. 60 caracteres)" };
 
-  const costRaw = (raw.cost ?? "").trim();
+  const costRaw = toStr(raw.cost);
   const cost = Number(costRaw);
   if (!costRaw || !Number.isInteger(cost) || cost < 0 || cost > 15) {
     return { ok: false, row, name, error: "Costo inválido (debe ser un entero de 0 a 15)" };
   }
 
-  const type = (raw.type ?? "").trim().toUpperCase();
+  const type = toStr(raw.type).toUpperCase();
   if (!VALID_TYPES.includes(type as (typeof VALID_TYPES)[number])) {
-    return { ok: false, row, name, error: `Tipo inválido "${raw.type ?? ""}" (usar CREATURE o SPELL)` };
+    return { ok: false, row, name, error: `Tipo inválido "${toStr(raw.type)}" (usar CREATURE o SPELL)` };
   }
 
-  const rarity = (raw.rarity ?? "").trim().toUpperCase();
+  const rarity = toStr(raw.rarity).toUpperCase();
   if (!VALID_RARITIES.includes(rarity as (typeof VALID_RARITIES)[number])) {
-    return { ok: false, row, name, error: `Rareza inválida "${raw.rarity ?? ""}" (usar COMUN, RARA, EPICA o LEGENDARIA)` };
+    return { ok: false, row, name, error: `Rareza inválida "${toStr(raw.rarity)}" (usar COMUN, RARA, EPICA o LEGENDARIA)` };
   }
 
-  const description = (raw.description ?? "").trim();
+  const description = toStr(raw.description);
   if (!description) return { ok: false, row, name, error: "Falta la descripción" };
   if (description.length > 300) return { ok: false, row, name, error: "Descripción demasiado larga (máx. 300 caracteres)" };
 
   let attack: number | null = null;
   let health: number | null = null;
   if (type === "CREATURE") {
-    const atkRaw = (raw.attack ?? "").trim();
-    const hpRaw = (raw.health ?? "").trim();
+    const atkRaw = toStr(raw.attack);
+    const hpRaw = toStr(raw.health);
     attack = atkRaw === "" ? 0 : Number(atkRaw);
     health = hpRaw === "" ? 1 : Number(hpRaw);
     if (!Number.isInteger(attack) || attack < 0) return { ok: false, row, name, error: "Ataque inválido" };
     if (!Number.isInteger(health) || health < 1) return { ok: false, row, name, error: "Vida inválida (mínimo 1)" };
   }
 
-  const effectKey = (raw.effectKey ?? "").trim() || null;
+  const effectKey = toStr(raw.effectKey) || null;
   if (effectKey && effectKey.length > 40) return { ok: false, row, name, error: "effectKey demasiado largo" };
 
-  const set = (raw.set ?? "").trim() || null;
-  if (set && set.length > 60) return { ok: false, row, name, error: "Nombre de set demasiado largo (máx. 60 caracteres)" };
+  // "edition" además de "set" para que sirva un archivo que use ese nombre de
+  // columna; si la fila no trae ninguno, se usa el nombre de colección que se
+  // haya puesto para todo el lote en el formulario de subida.
+  const set = toStr(raw.set) || toStr(raw.edition) || defaultSet || null;
+  if (set && set.length > 60) return { ok: false, row, name, error: "Nombre de colección demasiado largo (máx. 60 caracteres)" };
 
-  const imageUrlRaw = (raw.imageUrl ?? "").trim();
+  const code = toStr(raw.code) || null;
+  if (code && code.length > 30) return { ok: false, row, name, error: "Código demasiado largo (máx. 30 caracteres)" };
+
+  const imageUrlRaw = toStr(raw.imageUrl);
   let imageUrl: string | null = null;
   if (imageUrlRaw) {
     if (!/^https?:\/\//.test(imageUrlRaw)) {
@@ -174,6 +189,7 @@ function parseCardRow(raw: Record<string, string>, row: number): BulkRowOk | Bul
       effectKey,
       description,
       set,
+      code,
       imageUrl,
     },
   };
@@ -184,18 +200,30 @@ const bulkUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize:
 adminRouter.post("/cards/bulk", bulkUpload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No se recibió ningún archivo" });
 
-  let records: Record<string, string>[];
+  const filename = req.file.originalname.toLowerCase();
+  const isJson = filename.endsWith(".json") || req.file.mimetype === "application/json";
+  const defaultSet = typeof req.body?.defaultSet === "string" ? req.body.defaultSet.trim() || undefined : undefined;
+
+  let records: Record<string, unknown>[];
   try {
-    records = parse(req.file.buffer, { columns: true, trim: true, skip_empty_lines: true, bom: true });
+    if (isJson) {
+      const parsed = JSON.parse(req.file.buffer.toString("utf-8"));
+      if (!Array.isArray(parsed)) throw new Error("el archivo debe ser un array de cartas");
+      records = parsed;
+    } else {
+      records = parse(req.file.buffer, { columns: true, trim: true, skip_empty_lines: true, bom: true });
+    }
   } catch (err) {
-    return res.status(400).json({ error: "No se pudo leer el CSV: " + (err instanceof Error ? err.message : "formato inválido") });
+    return res.status(400).json({ error: "No se pudo leer el archivo: " + (err instanceof Error ? err.message : "formato inválido") });
   }
 
-  if (records.length === 0) return res.status(400).json({ error: "El archivo no tiene filas" });
-  if (records.length > 500) return res.status(400).json({ error: "Máximo 500 filas por archivo" });
+  if (records.length === 0) return res.status(400).json({ error: "El archivo no tiene cartas" });
+  if (records.length > 500) return res.status(400).json({ error: "Máximo 500 cartas por archivo" });
 
-  // La fila 1 del archivo es el encabezado, así que los datos arrancan en la 2.
-  const results = records.map((r, i) => parseCardRow(r, i + 2));
+  // En CSV la fila 1 es el encabezado, así que los datos arrancan en la 2; en
+  // JSON no hay encabezado, así que el primer elemento ya es el número 1.
+  const rowOffset = isJson ? 1 : 2;
+  const results = records.map((r, i) => parseCardRow(r, i + rowOffset, defaultSet));
   const errors = results.filter((r): r is BulkRowError => !r.ok);
   const valid = results.filter((r): r is BulkRowOk => r.ok);
 
