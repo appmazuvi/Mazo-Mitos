@@ -41,6 +41,8 @@ const paths: Record<string, string> = {
   circle: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z",
   skull: "M12 2a7 7 0 0 0-7 7c0 2.4 1.1 4.4 2.5 5.7L7 19h2l.5-2h5l.5 2h2l-.5-4.3c1.4-1.3 2.5-3.3 2.5-5.7a7 7 0 0 0-7-7ZM9.5 10a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4ZM14.5 10a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Z",
   menu: "M4 6h16M4 12h16M4 18h16",
+  chevronLeft: "M15 18 9 12l6-6",
+  chevronRight: "M9 18l6-6-6-6",
 };
 
 interface IconProps {

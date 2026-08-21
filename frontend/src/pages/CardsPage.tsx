@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { CardTile } from "../components/CardTile";
+import { CardDetailModal } from "../components/CardDetailModal";
 import type { Card } from "../types";
 
 export function CardsPage() {
   const [cards, setCards] = useState<Card[]>([]);
   const [query, setQuery] = useState("");
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   useEffect(() => {
     api.get<Card[]>("/api/cards").then(setCards);
@@ -29,9 +31,13 @@ export function CardsPage() {
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {filtered.map((card, i) => (
-          <CardTile key={card.id} card={card} index={i} />
+          <CardTile key={card.id} card={card} index={i} onClick={() => setOpenIndex(i)} />
         ))}
       </div>
+
+      {openIndex !== null && (
+        <CardDetailModal cards={filtered} index={openIndex} onClose={() => setOpenIndex(null)} onNavigate={setOpenIndex} />
+      )}
     </div>
   );
 }
