@@ -195,7 +195,7 @@ function parseCardRow(raw: Record<string, unknown>, row: number, defaultSet?: st
   };
 }
 
-const bulkUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } });
+const bulkUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
 adminRouter.post("/cards/bulk", bulkUpload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No se recibió ningún archivo" });
@@ -218,7 +218,6 @@ adminRouter.post("/cards/bulk", bulkUpload.single("file"), async (req, res) => {
   }
 
   if (records.length === 0) return res.status(400).json({ error: "El archivo no tiene cartas" });
-  if (records.length > 500) return res.status(400).json({ error: "Máximo 500 cartas por archivo" });
 
   // En CSV la fila 1 es el encabezado, así que los datos arrancan en la 2; en
   // JSON no hay encabezado, así que el primer elemento ya es el número 1.
