@@ -6,7 +6,19 @@ import { useAuth } from "../lib/AuthContext";
 import { sfx } from "../lib/sfx";
 import { GameCard, type CardPulse } from "../components/GameCard";
 import { Icon } from "../components/Icon";
+import { DiceRoll, rollDiceForTotal } from "../components/DiceRoll";
+import { AmbientFX, type AmbientTheme } from "../components/AmbientFX";
 import type { CardInstance, Deck, GameStateView } from "../types";
+
+function themeForEffect(effectKey: string | null | undefined): AmbientTheme {
+  if (!effectKey) return null;
+  if (effectKey.startsWith("DAMAGE") || effectKey.startsWith("AOE_DAMAGE")) return "fuego";
+  if (effectKey.startsWith("HEAL")) return "lluvia";
+  if (effectKey.startsWith("DRAW") || effectKey === "CHARGE") return "viento";
+  if (effectKey.startsWith("BUFF") || effectKey === "TAUNT") return "tierra";
+  if (effectKey === "DESTROY_TARGET" || effectKey === "LIFESTEAL") return "vacio";
+  return null;
+}
 
 const TARGETED_SPELLS = ["DAMAGE_2", "DAMAGE_3", "DAMAGE_4", "DAMAGE_6", "BUFF_ATTACK_2", "DESTROY_TARGET"];
 const FACE_TARGETABLE = ["DAMAGE_2", "DAMAGE_3", "DAMAGE_4", "DAMAGE_6"];
@@ -32,6 +44,16 @@ export function BattlePage() {
   const [cardPulses, setCardPulses] = useState<Record<string, CardPulse>>({});
   const [lifePulses, setLifePulses] = useState<{ me: CardPulse | null; opponent: CardPulse | null }>({ me: null, opponent: null });
   const [attackingIds, setAttackingIds] = useState<Set<string>>(new Set());
+  const [diceRoll, setDiceRoll] = useState<{ dice: number[]; bonus: number; key: number } | null>(null);
+  const [ambientTheme, setAmbientTheme] = useState<AmbientTheme>(null);
+  const ambientTimeoutRef = useRef<number | null>(null);
+
+  function triggerAmbient(theme: AmbientTheme) {
+    if (!theme) return;
+    setAmbientTheme(theme);
+    if (ambientTimeoutRef.current) window.clearTimeout(ambientTimeoutRef.current);
+    ambientTimeoutRef.current = window.setTimeout(() => setAmbientTheme(null), 5000);
+  }
   const [turnBanner, setTurnBanner] = useState<{ text: string; key: number } | null>(null);
   const prevGameRef = useRef<GameStateView | null>(null);
   const outcomePlayedRef = useRef(false);
@@ -142,6 +164,14 @@ export function BattlePage() {
   }
 
   function sendAttack(attackerInstanceId: string, targetInstanceId: string) {
+    const attacker = game?.me.board.find((c) => c.instanceId === attackerInstanceId);
+    if (attacker?.attack) {
+      const rollKey = nextPulseKey();
+      const { dice, bonus } = rollDiceForTotal(attacker.attack);
+      setDiceRoll({ dice, bonus, key: rollKey });
+      setTimeout(() => setDiceRoll((d) => (d?.key === rollKey ? null : d)), 750);
+      triggerAmbient(themeForEffect(attacker.effectKey));
+    }
     setAttackingIds((s) => new Set(s).add(attackerInstanceId));
     sfx.attack();
     setTimeout(() => {
@@ -160,6 +190,8 @@ export function BattlePage() {
     if (!isMyTurn || !game) return;
     const card = game.me.hand.find((c) => c?.instanceId === instanceId);
     if (!card) return;
+
+    triggerAmbient(themeForEffect(card.effectKey));
 
     if (card.type === "CREATURE") {
       sendAction({ type: "PLAY_CARD", instanceId });
@@ -220,6 +252,10 @@ export function BattlePage() {
   if (status === "playing" && game) {
     return (
       <div className="h-app-screen flex flex-col p-4 gap-3 overflow-hidden battle-table relative">
+        <AmbientFX theme={ambientTheme} />
+
+        <AnimatePresence>{diceRoll && <DiceRoll key={diceRoll.key} dice={diceRoll.dice} bonus={diceRoll.bonus} />}</AnimatePresence>
+
         <AnimatePresence>
           {turnBanner && (
             <motion.div

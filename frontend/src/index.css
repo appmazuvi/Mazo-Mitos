@@ -322,6 +322,54 @@ h1, h2, h3, .font-display {
     box-shadow: inset 0 0 100px 30px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(240, 185, 61, 0.15);
   }
 
+  /* ---- Ambiente de batalla: partículas según la última carta jugada ---- */
+  .ambient-ember {
+    position: absolute;
+    bottom: -5%;
+    width: 4px;
+    height: 4px;
+    border-radius: 999px;
+    background: radial-gradient(circle, #ffd98a, #f0791f 70%);
+    box-shadow: 0 0 6px 1px rgba(240, 121, 31, 0.8);
+    animation: ember-rise linear infinite;
+  }
+  .ambient-rain {
+    position: absolute;
+    top: -10%;
+    width: 2px;
+    height: 22px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, transparent, rgba(140, 200, 255, 0.7));
+    animation: rain-fall linear infinite;
+  }
+  .ambient-wind {
+    position: absolute;
+    left: -10%;
+    width: 70px;
+    height: 1.5px;
+    background: linear-gradient(90deg, transparent, rgba(220, 240, 255, 0.55), transparent);
+    animation: wind-blow linear infinite;
+  }
+  .ambient-dust {
+    position: absolute;
+    bottom: -5%;
+    width: 3px;
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(196, 164, 106, 0.6);
+    animation: dust-drift ease-in-out infinite;
+  }
+  .ambient-void {
+    position: absolute;
+    bottom: -5%;
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(196, 99, 255, 0.85), transparent 70%);
+    box-shadow: 0 0 8px 2px rgba(150, 60, 220, 0.6);
+    animation: void-drift ease-in infinite;
+  }
+
   .life-pulse {
     animation: life-pulse 0.5s ease;
   }
@@ -355,6 +403,37 @@ h1, h2, h3, .font-display {
 @keyframes flash-green {
   0%, 100% { color: inherit; }
   30% { color: #4ade80; text-shadow: 0 0 12px rgba(74, 222, 128, 0.8); }
+}
+
+@keyframes ember-rise {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translateY(-260px) translateX(12px); opacity: 0; }
+}
+
+@keyframes rain-fall {
+  0% { transform: translateY(0); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translateY(340px); opacity: 0; }
+}
+
+@keyframes wind-blow {
+  0% { transform: translateX(0); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateX(420px); opacity: 0; }
+}
+
+@keyframes dust-drift {
+  0% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: 0.7; }
+  100% { transform: translate(30px, -220px); opacity: 0; }
+}
+
+@keyframes void-drift {
+  0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
+  20% { opacity: 0.9; }
+  100% { transform: translate(-24px, -240px) scale(1.1); opacity: 0; }
 }
 
 @keyframes float-up-fade {
