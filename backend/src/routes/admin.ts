@@ -1,4 +1,6 @@
 import { Router } from "express";
+import multer from "multer";
+import { parse } from "csv-parse/sync";
 import { z } from "zod";
 import { prisma } from "../prisma.js";
 import { requireAuth, requireAdmin, type AuthedRequest } from "../auth.js";
@@ -56,6 +58,7 @@ const cardSchema = z.object({
   effectKey: z.string().max(40).nullable().optional(),
   description: z.string().min(1).max(300),
   imageUrl: httpUrl.nullable().optional(),
+  set: z.string().max(60).nullable().optional(),
 });
 
 adminRouter.post("/cards", async (req, res) => {
@@ -76,6 +79,144 @@ adminRouter.delete("/cards/:id", async (req, res) => {
   await prisma.deckCard.deleteMany({ where: { cardId: req.params.id } });
   await prisma.card.delete({ where: { id: req.params.id } });
   res.status(204).end();
+});
+
+// ---------- Carga masiva de cartas por CSV ----------
+const VALID_TYPES = ["CREATURE", "SPELL"] as const;
+const VALID_RARITIES = ["COMUN", "RARA", "EPICA", "LEGENDARIA"] as const;
+
+interface BulkRowOk {
+  ok: true;
+  row: number;
+  name: string;
+  data: {
+    name: string;
+    cost: number;
+    type: (typeof VALID_TYPES)[number];
+    attack: number | null;
+    health: number | null;
+    rarity: (typeof VALID_RARITIES)[number];
+    effectKey: string | null;
+    description: string;
+    set: string | null;
+    imageUrl: string | null;
+  };
+}
+interface BulkRowError {
+  ok: false;
+  row: number;
+  name?: string;
+  error: string;
+}
+
+function parseCardRow(raw: Record<string, string>, row: number): BulkRowOk | BulkRowError {
+  const name = (raw.name ?? "").trim();
+  if (!name) return { ok: false, row, error: "Falta el nombre" };
+  if (name.length > 60) return { ok: false, row, name, error: "Nombre demasiado largo (máx. 60 caracteres)" };
+
+  const costRaw = (raw.cost ?? "").trim();
+  const cost = Number(costRaw);
+  if (!costRaw || !Number.isInteger(cost) || cost < 0 || cost > 15) {
+    return { ok: false, row, name, error: "Costo inválido (debe ser un entero de 0 a 15)" };
+  }
+
+  const type = (raw.type ?? "").trim().toUpperCase();
+  if (!VALID_TYPES.includes(type as (typeof VALID_TYPES)[number])) {
+    return { ok: false, row, name, error: `Tipo inválido "${raw.type ?? ""}" (usar CREATURE o SPELL)` };
+  }
+
+  const rarity = (raw.rarity ?? "").trim().toUpperCase();
+  if (!VALID_RARITIES.includes(rarity as (typeof VALID_RARITIES)[number])) {
+    return { ok: false, row, name, error: `Rareza inválida "${raw.rarity ?? ""}" (usar COMUN, RARA, EPICA o LEGENDARIA)` };
+  }
+
+  const description = (raw.description ?? "").trim();
+  if (!description) return { ok: false, row, name, error: "Falta la descripción" };
+  if (description.length > 300) return { ok: false, row, name, error: "Descripción demasiado larga (máx. 300 caracteres)" };
+
+  let attack: number | null = null;
+  let health: number | null = null;
+  if (type === "CREATURE") {
+    const atkRaw = (raw.attack ?? "").trim();
+    const hpRaw = (raw.health ?? "").trim();
+    attack = atkRaw === "" ? 0 : Number(atkRaw);
+    health = hpRaw === "" ? 1 : Number(hpRaw);
+    if (!Number.isInteger(attack) || attack < 0) return { ok: false, row, name, error: "Ataque inválido" };
+    if (!Number.isInteger(health) || health < 1) return { ok: false, row, name, error: "Vida inválida (mínimo 1)" };
+  }
+
+  const effectKey = (raw.effectKey ?? "").trim() || null;
+  if (effectKey && effectKey.length > 40) return { ok: false, row, name, error: "effectKey demasiado largo" };
+
+  const set = (raw.set ?? "").trim() || null;
+  if (set && set.length > 60) return { ok: false, row, name, error: "Nombre de set demasiado largo (máx. 60 caracteres)" };
+
+  const imageUrlRaw = (raw.imageUrl ?? "").trim();
+  let imageUrl: string | null = null;
+  if (imageUrlRaw) {
+    if (!/^https?:\/\//.test(imageUrlRaw)) {
+      return { ok: false, row, name, error: "imageUrl debe empezar con http:// o https://" };
+    }
+    imageUrl = imageUrlRaw;
+  }
+
+  return {
+    ok: true,
+    row,
+    name,
+    data: {
+      name,
+      cost,
+      type: type as (typeof VALID_TYPES)[number],
+      attack,
+      health,
+      rarity: rarity as (typeof VALID_RARITIES)[number],
+      effectKey,
+      description,
+      set,
+      imageUrl,
+    },
+  };
+}
+
+const bulkUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } });
+
+adminRouter.post("/cards/bulk", bulkUpload.single("file"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No se recibió ningún archivo" });
+
+  let records: Record<string, string>[];
+  try {
+    records = parse(req.file.buffer, { columns: true, trim: true, skip_empty_lines: true, bom: true });
+  } catch (err) {
+    return res.status(400).json({ error: "No se pudo leer el CSV: " + (err instanceof Error ? err.message : "formato inválido") });
+  }
+
+  if (records.length === 0) return res.status(400).json({ error: "El archivo no tiene filas" });
+  if (records.length > 500) return res.status(400).json({ error: "Máximo 500 filas por archivo" });
+
+  // La fila 1 del archivo es el encabezado, así que los datos arrancan en la 2.
+  const results = records.map((r, i) => parseCardRow(r, i + 2));
+  const errors = results.filter((r): r is BulkRowError => !r.ok);
+  const valid = results.filter((r): r is BulkRowOk => r.ok);
+
+  let created = 0;
+  let updated = 0;
+  for (const r of valid) {
+    const existing = await prisma.card.findUnique({ where: { name: r.data.name } });
+    if (existing) {
+      await prisma.card.update({ where: { id: existing.id }, data: r.data });
+      updated += 1;
+    } else {
+      await prisma.card.create({ data: r.data });
+      created += 1;
+    }
+  }
+
+  res.json({
+    created,
+    updated,
+    errors: errors.map(({ row, name, error }) => ({ row, name, error })),
+  });
 });
 
 // ---------- Usuarios ----------

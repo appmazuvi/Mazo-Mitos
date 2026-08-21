@@ -93,8 +93,11 @@ model Card {
   effectKey   String?
   description String
   imageUrl    String?
+  set         String?
 
   deckCards   DeckCard[]
+
+  @@index([set])
 }
 
 model Deck {

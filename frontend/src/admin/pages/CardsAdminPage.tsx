@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { api } from "../../lib/api";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { api, API_URL } from "../../lib/api";
 import { Icon } from "../../components/Icon";
 import type { Card } from "../../types";
 
@@ -13,19 +13,43 @@ const EMPTY: Omit<Card, "id"> = {
   effectKey: null,
   description: "",
   imageUrl: null,
+  set: null,
 };
 
 const EFFECTS = ["", "TAUNT", "CHARGE", "LIFESTEAL", "DAMAGE_2", "DAMAGE_3", "DAMAGE_4", "DAMAGE_6", "AOE_DAMAGE_2", "HEAL_4", "HEAL_8", "DRAW_2", "BUFF_ATTACK_2", "DESTROY_TARGET"];
+
+const CSV_TEMPLATE = `name,cost,type,attack,health,rarity,effectKey,description,set,imageUrl
+Recluta de Ignis,1,CREATURE,1,2,COMUN,,Un joven soldado de las llamas.,Batalla 1,
+Bola de Fuego,4,SPELL,,,RARA,DAMAGE_4,Inflige 4 de daño a un objetivo.,Batalla 1,
+`;
+
+interface BulkResult {
+  created: number;
+  updated: number;
+  errors: { row: number; name?: string; error: string }[];
+}
 
 export function CardsAdminPage() {
   const [cards, setCards] = useState<Card[]>([]);
   const [editing, setEditing] = useState<Card | (Omit<Card, "id"> & { id?: string }) | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [setFilter, setSetFilter] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
+  const [bulkResult, setBulkResult] = useState<BulkResult | null>(null);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function load() {
     api.get<Card[]>("/api/cards").then(setCards);
   }
   useEffect(load, []);
+
+  const sets = useMemo(() => {
+    const unique = new Set(cards.map((c) => c.set).filter((s): s is string => !!s));
+    return [...unique].sort();
+  }, [cards]);
+
+  const filteredCards = setFilter ? cards.filter((c) => c.set === setFilter) : cards;
 
   async function save() {
     if (!editing) return;
@@ -36,6 +60,7 @@ export function CardsAdminPage() {
       attack: editing.type === "CREATURE" ? Number(editing.attack ?? 0) : null,
       health: editing.type === "CREATURE" ? Number(editing.health ?? 1) : null,
       effectKey: editing.effectKey || null,
+      set: editing.set?.trim() || null,
     };
     try {
       if ("id" in editing && editing.id) {
@@ -56,6 +81,41 @@ export function CardsAdminPage() {
     load();
   }
 
+  function downloadTemplate() {
+    const blob = new Blob([CSV_TEMPLATE], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "plantilla-cartas.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function uploadCsv(file: File) {
+    setUploading(true);
+    setBulkError(null);
+    setBulkResult(null);
+    try {
+      const token = localStorage.getItem("cartaverso_token");
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch(`${API_URL}/api/admin/cards/bulk`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: form,
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? "Error al subir el archivo");
+      setBulkResult(body as BulkResult);
+      load();
+    } catch (err) {
+      setBulkError(err instanceof Error ? err.message : "Error al subir el archivo");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
   return (
     <div className="max-w-6xl mx-auto py-8 px-6 grid lg:grid-cols-[1fr_360px] gap-6">
       <div>
@@ -67,11 +127,76 @@ export function CardsAdminPage() {
           </button>
         </div>
 
+        <div className="card-surface p-4 mb-5">
+          <p className="text-sm font-semibold mb-1">Carga masiva por archivo</p>
+          <p className="text-xs text-white/40 mb-3">
+            Subí un CSV con columnas name, cost, type, attack, health, rarity, effectKey, description, set, imageUrl. Las cartas se
+            agrupan por el nombre de set (ej. "Batalla 1", "Batalla 2"); si el nombre de una carta ya existe, se actualiza en vez de
+            duplicarse.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={downloadTemplate} className="btn-ghost px-3 py-2 text-xs flex items-center gap-1.5">
+              <Icon name="image" size={14} />
+              Descargar plantilla
+            </button>
+            <label className="btn-primary px-3 py-2 text-xs flex items-center gap-1.5 cursor-pointer">
+              <Icon name={uploading ? "loader" : "send"} size={14} className={uploading ? "animate-spin" : ""} />
+              {uploading ? "Subiendo..." : "Subir CSV"}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) uploadCsv(file);
+                }}
+              />
+            </label>
+          </div>
+
+          {bulkError && <p className="text-xs text-red-400 mt-3">{bulkError}</p>}
+          {bulkResult && (
+            <div className="mt-3 text-xs">
+              <p className="text-emerald-400">
+                {bulkResult.created} carta{bulkResult.created === 1 ? "" : "s"} creada{bulkResult.created === 1 ? "" : "s"}, {bulkResult.updated}{" "}
+                actualizada{bulkResult.updated === 1 ? "" : "s"}.
+              </p>
+              {bulkResult.errors.length > 0 && (
+                <div className="mt-2 flex flex-col gap-1">
+                  <p className="text-amber-300">{bulkResult.errors.length} fila(s) con problemas:</p>
+                  {bulkResult.errors.map((e, i) => (
+                    <p key={i} className="text-white/50">
+                      Fila {e.row}{e.name ? ` (${e.name})` : ""}: {e.error}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {sets.length > 0 && (
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xs text-white/40">Set:</span>
+            <select className="input-field text-xs py-1.5" value={setFilter} onChange={(e) => setSetFilter(e.target.value)}>
+              <option value="">Todos</option>
+              {sets.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="card-surface overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-[11px] uppercase tracking-wide text-white/40 border-b border-white/5">
                 <th className="p-3">Nombre</th>
+                <th className="p-3">Set</th>
                 <th className="p-3">Costo</th>
                 <th className="p-3">Tipo</th>
                 <th className="p-3">Rareza</th>
@@ -79,9 +204,10 @@ export function CardsAdminPage() {
               </tr>
             </thead>
             <tbody>
-              {cards.map((c) => (
+              {filteredCards.map((c) => (
                 <tr key={c.id} className="border-b border-white/5 hover:bg-white/5">
                   <td className="p-3 font-medium">{c.name}</td>
+                  <td className="p-3 text-white/40">{c.set ?? "—"}</td>
                   <td className="p-3">{c.cost}</td>
                   <td className="p-3 text-white/60">{c.type === "CREATURE" ? "Criatura" : "Hechizo"}</td>
                   <td className="p-3 text-white/60">{c.rarity}</td>
@@ -106,6 +232,20 @@ export function CardsAdminPage() {
           <div className="flex flex-col gap-3">
             <Field label="Nombre">
               <input className="input-field w-full" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
+            </Field>
+            <Field label="Set">
+              <input
+                className="input-field w-full"
+                list="set-options"
+                placeholder="Ej. Batalla 1"
+                value={editing.set ?? ""}
+                onChange={(e) => setEditing({ ...editing, set: e.target.value })}
+              />
+              <datalist id="set-options">
+                {sets.map((s) => (
+                  <option key={s} value={s} />
+                ))}
+              </datalist>
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Costo">

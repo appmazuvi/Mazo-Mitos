@@ -57,6 +57,7 @@ export interface Card {
   effectKey: string | null;
   description: string;
   imageUrl?: string | null;
+  set?: string | null;
 }
 
 export interface DeckCard {
