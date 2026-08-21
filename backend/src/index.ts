@@ -45,6 +45,10 @@ app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 app.use("/uploads", express.static(uploadDir));
 
+const manualPath = path.join(process.cwd(), "public", "manual.html");
+app.get("/manual", (_req, res) => res.sendFile(manualPath));
+app.get("/manual.html", (_req, res) => res.sendFile(manualPath));
+
 app.get("/health", (_req, res) => res.json({ ok: true }));
 app.use(
   "/api",
