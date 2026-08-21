@@ -29,6 +29,20 @@ interface BulkResult {
   errors: { row: number; name?: string; error: string }[];
 }
 
+interface ImageBulkResult {
+  matched: string[];
+  unmatched: string[];
+  failed: { file: string; error: string }[];
+}
+
+function normalizeForMatch(s: string) {
+  return s
+    .replace(/\.[a-zA-Z0-9]+$/, "")
+    .replace(/[-_]+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
 export function CardsAdminPage() {
   const [cards, setCards] = useState<Card[]>([]);
   const [editing, setEditing] = useState<Card | (Omit<Card, "id"> & { id?: string }) | null>(null);
@@ -38,6 +52,10 @@ export function CardsAdminPage() {
   const [bulkResult, setBulkResult] = useState<BulkResult | null>(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imgUploading, setImgUploading] = useState(false);
+  const [imgResult, setImgResult] = useState<ImageBulkResult | null>(null);
+  const imgInputRef = useRef<HTMLInputElement>(null);
+  const [artUploading, setArtUploading] = useState(false);
 
   function load() {
     api.get<Card[]>("/api/cards").then(setCards);
@@ -116,6 +134,49 @@ export function CardsAdminPage() {
     }
   }
 
+  async function uploadArtFile(file: File) {
+    if (!editing) return;
+    setArtUploading(true);
+    setError(null);
+    try {
+      const { url } = await api.upload<{ url: string }>("/api/uploads/image", file);
+      setEditing((prev) => (prev ? { ...prev, imageUrl: url } : prev));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al subir la imagen");
+    } finally {
+      setArtUploading(false);
+    }
+  }
+
+  async function uploadImagesBulk(files: FileList) {
+    setImgUploading(true);
+    setImgResult(null);
+    const byName = new Map(cards.map((c) => [normalizeForMatch(c.name), c]));
+    const matched: string[] = [];
+    const unmatched: string[] = [];
+    const failed: { file: string; error: string }[] = [];
+
+    for (const file of Array.from(files)) {
+      const card = byName.get(normalizeForMatch(file.name));
+      if (!card) {
+        unmatched.push(file.name);
+        continue;
+      }
+      try {
+        const { url } = await api.upload<{ url: string }>("/api/uploads/image", file);
+        await api.put(`/api/admin/cards/${card.id}`, { imageUrl: url });
+        matched.push(card.name);
+      } catch (err) {
+        failed.push({ file: file.name, error: err instanceof Error ? err.message : "Error al subir" });
+      }
+    }
+
+    setImgResult({ matched, unmatched, failed });
+    setImgUploading(false);
+    if (imgInputRef.current) imgInputRef.current.value = "";
+    load();
+  }
+
   return (
     <div className="max-w-6xl mx-auto py-8 px-6 grid lg:grid-cols-[1fr_360px] gap-6">
       <div>
@@ -170,6 +231,56 @@ export function CardsAdminPage() {
                     <p key={i} className="text-white/50">
                       Fila {e.row}{e.name ? ` (${e.name})` : ""}: {e.error}
                     </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="card-surface p-4 mb-5">
+          <p className="text-sm font-semibold mb-1">Subir diseños de carta en lote</p>
+          <p className="text-xs text-white/40 mb-3">
+            Elegí varias imágenes a la vez (por ejemplo, exportadas de Canva). Cada archivo se asigna automáticamente a la carta cuyo
+            nombre coincida con el nombre del archivo — "Recluta de Ignis.png" se asigna a la carta "Recluta de Ignis". Primero creá las
+            cartas (a mano o por CSV) y después subí acá el arte.
+          </p>
+          <label className="btn-primary px-3 py-2 text-xs flex items-center gap-1.5 cursor-pointer w-fit">
+            <Icon name={imgUploading ? "loader" : "image"} size={14} className={imgUploading ? "animate-spin" : ""} />
+            {imgUploading ? "Subiendo..." : "Elegir imágenes"}
+            <input
+              ref={imgInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              multiple
+              className="hidden"
+              disabled={imgUploading}
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) uploadImagesBulk(e.target.files);
+              }}
+            />
+          </label>
+
+          {imgResult && (
+            <div className="mt-3 text-xs flex flex-col gap-1.5">
+              {imgResult.matched.length > 0 && (
+                <p className="text-emerald-400">
+                  Asignadas: {imgResult.matched.join(", ")}
+                </p>
+              )}
+              {imgResult.failed.length > 0 && (
+                <div>
+                  <p className="text-red-400">Fallaron:</p>
+                  {imgResult.failed.map((f, i) => (
+                    <p key={i} className="text-white/50">{f.file}: {f.error}</p>
+                  ))}
+                </div>
+              )}
+              {imgResult.unmatched.length > 0 && (
+                <div>
+                  <p className="text-amber-300">Sin carta coincidente (revisá que el nombre del archivo sea igual al nombre de la carta):</p>
+                  {imgResult.unmatched.map((f, i) => (
+                    <p key={i} className="text-white/50">{f}</p>
                   ))}
                 </div>
               )}
@@ -287,6 +398,31 @@ export function CardsAdminPage() {
             </Field>
             <Field label="Descripción">
               <textarea className="input-field w-full" rows={3} value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} />
+            </Field>
+            <Field label="Arte de la carta">
+              <div className="flex items-center gap-3">
+                {editing.imageUrl ? (
+                  <img src={editing.imageUrl} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0 border border-white/10" />
+                ) : (
+                  <div className="w-14 h-14 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-white/20">
+                    <Icon name="image" size={20} />
+                  </div>
+                )}
+                <label className="btn-ghost px-3 py-2 text-xs flex items-center gap-1.5 cursor-pointer">
+                  <Icon name={artUploading ? "loader" : "image"} size={14} className={artUploading ? "animate-spin" : ""} />
+                  {artUploading ? "Subiendo..." : editing.imageUrl ? "Cambiar imagen" : "Subir imagen"}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    className="hidden"
+                    disabled={artUploading}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) uploadArtFile(file);
+                    }}
+                  />
+                </label>
+              </div>
             </Field>
 
             {error && <p className="text-xs text-red-400">{error}</p>}
