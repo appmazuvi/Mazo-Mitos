@@ -244,7 +244,8 @@ export function CardsAdminPage() {
           <p className="text-sm font-semibold mb-1">Carga masiva por archivo</p>
           <p className="text-xs text-white/40 mb-3">
             Subí un CSV o JSON con las columnas/campos name, cost, type, attack, health, rarity, effectKey, description, set, code,
-            imageUrl (podés usar "edition" en vez de "set"). Si el nombre de una carta ya existe, se actualiza en vez de duplicarse.
+            imageUrl — también podés usarlos en español (nombre, costo, tipo, fuerza, vida, rareza, habilidad, descripcion, coleccion).
+            Si el nombre de una carta ya existe, se actualiza en vez de duplicarse.
           </p>
           <Field label="Nombre de colección para este lote (opcional)">
             <input

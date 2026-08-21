@@ -116,57 +116,76 @@ function toStr(v: unknown): string {
   return String(v).trim();
 }
 
+// Cada campo se puede escribir en inglés o en español (y sin importar
+// mayúsculas/acentos), para que sirva tanto un archivo hecho a mano en
+// español como uno con los nombres de columna "técnicos".
+function stripAccents(s: string): string {
+  return s.normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
+function pick(raw: Record<string, unknown>, ...keys: string[]): unknown {
+  const lookup = new Map<string, unknown>();
+  for (const k of Object.keys(raw)) lookup.set(stripAccents(k.toLowerCase()), raw[k]);
+  for (const k of keys) {
+    const v = lookup.get(stripAccents(k.toLowerCase()));
+    if (v !== undefined && v !== null && v !== "") return v;
+  }
+  return undefined;
+}
+
 // Acepta tanto una fila de CSV (siempre strings) como un objeto de un array
 // JSON (valores ya tipados) — se normalizan a texto antes de validar.
 function parseCardRow(raw: Record<string, unknown>, row: number, defaultSet?: string): BulkRowOk | BulkRowError {
-  const name = toStr(raw.name);
+  const name = toStr(pick(raw, "name", "nombre"));
   if (!name) return { ok: false, row, error: "Falta el nombre" };
   if (name.length > 60) return { ok: false, row, name, error: "Nombre demasiado largo (máx. 60 caracteres)" };
 
-  const costRaw = toStr(raw.cost);
+  const costRaw = toStr(pick(raw, "cost", "costo"));
   const cost = Number(costRaw);
   if (!costRaw || !Number.isInteger(cost) || cost < 0 || cost > 15) {
     return { ok: false, row, name, error: "Costo inválido (debe ser un entero de 0 a 15)" };
   }
 
-  const type = toStr(raw.type).toUpperCase();
+  const typeRaw = toStr(pick(raw, "type", "tipo"));
+  const type = typeRaw.toUpperCase() === "CRIATURA" ? "CREATURE" : typeRaw.toUpperCase() === "HECHIZO" ? "SPELL" : typeRaw.toUpperCase();
   if (!VALID_TYPES.includes(type as (typeof VALID_TYPES)[number])) {
-    return { ok: false, row, name, error: `Tipo inválido "${toStr(raw.type)}" (usar CREATURE o SPELL)` };
+    return { ok: false, row, name, error: `Tipo inválido "${typeRaw}" (usar CREATURE/Criatura o SPELL/Hechizo)` };
   }
 
-  const rarity = toStr(raw.rarity).toUpperCase();
+  const rarityRaw = toStr(pick(raw, "rarity", "rareza"));
+  const rarity = rarityRaw.toUpperCase();
   if (!VALID_RARITIES.includes(rarity as (typeof VALID_RARITIES)[number])) {
-    return { ok: false, row, name, error: `Rareza inválida "${toStr(raw.rarity)}" (usar COMUN, RARA, EPICA o LEGENDARIA)` };
+    return { ok: false, row, name, error: `Rareza inválida "${rarityRaw}" (usar COMUN, RARA, EPICA o LEGENDARIA)` };
   }
 
-  const description = toStr(raw.description);
+  const description = toStr(pick(raw, "description", "descripcion", "texto"));
   if (!description) return { ok: false, row, name, error: "Falta la descripción" };
   if (description.length > 300) return { ok: false, row, name, error: "Descripción demasiado larga (máx. 300 caracteres)" };
 
   let attack: number | null = null;
   let health: number | null = null;
   if (type === "CREATURE") {
-    const atkRaw = toStr(raw.attack);
-    const hpRaw = toStr(raw.health);
+    const atkRaw = toStr(pick(raw, "attack", "ataque", "fuerza"));
+    const hpRaw = toStr(pick(raw, "health", "vida", "defensa"));
     attack = atkRaw === "" ? 0 : Number(atkRaw);
     health = hpRaw === "" ? 1 : Number(hpRaw);
     if (!Number.isInteger(attack) || attack < 0) return { ok: false, row, name, error: "Ataque inválido" };
     if (!Number.isInteger(health) || health < 1) return { ok: false, row, name, error: "Vida inválida (mínimo 1)" };
   }
 
-  const effectKey = toStr(raw.effectKey) || null;
+  const effectKey = toStr(pick(raw, "effectKey", "habilidad", "efecto", "palabraclave")) || null;
   if (effectKey && effectKey.length > 40) return { ok: false, row, name, error: "effectKey demasiado largo" };
 
-  // "edition" además de "set" para que sirva un archivo que use ese nombre de
-  // columna; si la fila no trae ninguno, se usa el nombre de colección que se
-  // haya puesto para todo el lote en el formulario de subida.
-  const set = toStr(raw.set) || toStr(raw.edition) || defaultSet || null;
+  // "edition"/"colección" además de "set" para que sirva un archivo que use
+  // ese nombre de columna; si la fila no trae ninguno, se usa el nombre de
+  // colección que se haya puesto para todo el lote en el formulario de subida.
+  const set = toStr(pick(raw, "set", "edition", "coleccion", "edicion")) || defaultSet || null;
   if (set && set.length > 60) return { ok: false, row, name, error: "Nombre de colección demasiado largo (máx. 60 caracteres)" };
 
-  const code = toStr(raw.code) || null;
+  const code = toStr(pick(raw, "code", "codigo")) || null;
   if (code && code.length > 30) return { ok: false, row, name, error: "Código demasiado largo (máx. 30 caracteres)" };
 
-  const imageUrlRaw = toStr(raw.imageUrl);
+  const imageUrlRaw = toStr(pick(raw, "imageUrl", "imagen", "urlimagen"));
   let imageUrl: string | null = null;
   if (imageUrlRaw) {
     if (!/^https?:\/\//.test(imageUrlRaw)) {
